@@ -94,7 +94,7 @@ export default function CentersListPage() {
 
         <Card className="bg-gradient-to-br from-danger-500 to-danger-600 text-white">
           <div className="text-3xl font-bold mb-2">
-            {centers.filter((c) => c.status === 'inactive').length}
+            {centers.filter((c) => c.status === 'suspended').length}
           </div>
           <div className="text-danger-100">Bloklangan</div>
         </Card>
@@ -106,6 +106,7 @@ export default function CentersListPage() {
           <table className="table">
             <thead className="table-header">
               <tr>
+                <th className="table-header-cell">Invite Code</th>
                 <th className="table-header-cell">Markaz nomi</th>
                 <th className="table-header-cell">Email</th>
                 <th className="table-header-cell">Telefon</th>
@@ -117,6 +118,11 @@ export default function CentersListPage() {
             <tbody>
               {filteredCenters.map((center) => (
                 <tr key={center.id} className="table-row">
+                  <td className="table-cell">
+                    <code className="bg-primary-100 px-2 py-1 rounded font-mono text-sm text-primary-700 font-semibold">
+                      {center.inviteCode}
+                    </code>
+                  </td>
                   <td className="table-cell font-semibold">{center.name}</td>
                   <td className="table-cell">{center.email}</td>
                   <td className="table-cell">{center.phone}</td>

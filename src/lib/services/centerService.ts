@@ -13,7 +13,6 @@ import {
   Timestamp,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
-import { authService } from './authService';
 import {
   Center,
   CreateCenterData,
@@ -24,17 +23,27 @@ class CenterService {
   private collectionName = 'centers';
 
   /**
-   * O'quv markazi yaratish (SuperAdmin)
+   * Invite code generatsiya qilish
    */
-  async create(
-    data: CreateCenterData,
-    adminEmail: string,
-    adminPassword: string,
-    adminName: string,
-    adminPhone: string
-  ): Promise<string> {
+  private generateInviteCode(): string {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = '';
+    for (let i = 0; i < 8; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+  }
+
+  /**
+   * O'quv markazi yaratish (FAQAT CENTER, admin yo'q)
+   */
+  async create(data: CreateCenterData): Promise<{
+    centerId: string;
+    inviteCode: string;
+  }> {
     try {
-      // 1. Center yaratish
+      const inviteCode = this.generateInviteCode();
+
       const centerData = {
         name: data.name,
         phone: data.phone,
@@ -43,6 +52,7 @@ class CenterService {
         logo: '',
         status: 'active' as const,
         ownerId: data.ownerId,
+        inviteCode: inviteCode,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       };
@@ -51,22 +61,91 @@ class CenterService {
         collection(db, this.collectionName),
         centerData
       );
-      const centerId = centerRef.id;
 
-      // 2. Center Admin yaratish
-      await authService.register({
-        email: adminEmail,
-        password: adminPassword,
-        displayName: adminName,
-        phone: adminPhone,
-        role: 'centeradmin',
-        centerId: centerId,
-      });
-
-      return centerId;
+      return {
+        centerId: centerRef.id,
+        inviteCode: inviteCode,
+      };
     } catch (error) {
       console.error('Create center error:', error);
       throw new Error('O\'quv markazini yaratishda xatolik');
+    }
+  }
+
+  /**
+   * Invite code orqali centerni topish
+   */
+  async getByInviteCode(inviteCode: string): Promise<Center | null> {
+    try {
+      const q = query(
+        collection(db, this.collectionName),
+        where('inviteCode', '==', inviteCode.toUpperCase())
+      );
+
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        return null;
+      }
+
+      const doc = querySnapshot.docs[0];
+      return { id: doc.id, ...doc.data() } as Center;
+    } catch (error) {
+      console.error('Get by invite code error:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Oddiy center yaratish (register uchun)
+   */
+  async createBasic(data: {
+    name: string;
+    phone: string;
+    address: string;
+    email: string;
+    ownerId: string;
+  }): Promise<string> {
+    try {
+      const inviteCode = this.generateInviteCode();
+
+      const centerData = {
+        name: data.name,
+        phone: data.phone,
+        address: data.address,
+        email: data.email,
+        logo: '',
+        status: 'active' as const,
+        ownerId: data.ownerId,
+        inviteCode: inviteCode,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      };
+
+      const centerRef = await addDoc(
+        collection(db, this.collectionName),
+        centerData
+      );
+
+      return centerRef.id;
+    } catch (error) {
+      console.error('Create basic center error:', error);
+      throw new Error('Markazni yaratishda xatolik');
+    }
+  }
+
+  /**
+   * User'ning centerID'sini yangilash
+   */
+  async updateUserCenterId(userId: string, centerId: string): Promise<void> {
+    try {
+      await updateDoc(doc(db, 'users', userId), {
+        centerId: centerId,
+        updatedAt: serverTimestamp(),
+      });
+    } catch (error) {
+      console.error('Update user centerId error:', error);
+      throw new Error('CenterId yangilashda xatolik');
     }
   }
 
@@ -155,7 +234,6 @@ class CenterService {
     totalDebt: number;
   }> {
     try {
-      // Students
       const studentsQuery = query(
         collection(db, 'students'),
         where('centerId', '==', centerId)
@@ -166,7 +244,6 @@ class CenterService {
         totalDebt += doc.data().totalDebt || 0;
       });
 
-      // Groups
       const groupsQuery = query(
         collection(db, 'groups'),
         where('centerId', '==', centerId),
@@ -174,7 +251,6 @@ class CenterService {
       );
       const groupsSnapshot = await getDocs(groupsQuery);
 
-      // Teachers
       const teachersQuery = query(
         collection(db, 'teachers'),
         where('centerId', '==', centerId),
@@ -182,7 +258,6 @@ class CenterService {
       );
       const teachersSnapshot = await getDocs(teachersQuery);
 
-      // Monthly Revenue (joriy oy)
       const currentMonth = new Date().toISOString().slice(0, 7);
       const paymentsQuery = query(
         collection(db, 'payments'),
@@ -219,7 +294,6 @@ class CenterService {
    */
   async delete(centerId: string): Promise<void> {
     try {
-      // Tekshirish: centerda ma'lumotlar bor-yo'qligini
       const studentsQuery = query(
         collection(db, 'students'),
         where('centerId', '==', centerId)

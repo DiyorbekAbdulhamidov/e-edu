@@ -8,6 +8,7 @@ export interface Center extends BaseEntity {
   logo: string;
   status: Status;
   ownerId: string;
+  inviteCode: string; // YANGI
 }
 
 export interface CreateCenterData {

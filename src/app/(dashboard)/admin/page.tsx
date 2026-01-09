@@ -19,7 +19,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user?.centerId) {
+    if (user?.centerId && user.centerId !== 'pending') {
       loadStats();
     } else {
       setLoading(false);
@@ -28,7 +28,7 @@ export default function AdminDashboard() {
 
   const loadStats = async () => {
     try {
-      if (user?.centerId) {
+      if (user?.centerId && user.centerId !== 'pending') {
         const data = await studentService.getStats(user.centerId);
         setStats(data);
       }
@@ -38,6 +38,28 @@ export default function AdminDashboard() {
       setLoading(false);
     }
   };
+
+  // Agar centerId pending bo'lsa
+  if (user?.centerId === 'pending') {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Card className="max-w-md text-center p-8">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">
+            ⏳ Hisobingiz tayyorlanmoqda
+          </h2>
+          <p className="text-gray-600 mb-4">
+            Markazingiz yaratilmoqda. Iltimos, bir oz kuting va sahifani yangilang.
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+          >
+            Sahifani yangilash
+          </button>
+        </Card>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
