@@ -1,0 +1,117 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useAuthContext } from '@/contexts/AuthContext';
+import { studentService } from '@/lib/services/studentService';
+import Card from '@/components/ui/Card';
+import Spinner from '@/components/ui/Spinner';
+import Link from 'next/link';
+
+export default function AdminDashboard() {
+  const { user } = useAuthContext();
+  const [stats, setStats] = useState({
+    totalStudents: 0,
+    activeStudents: 0,
+    frozenStudents: 0,
+    leftStudents: 0,
+    totalDebt: 0,
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user?.centerId) {
+      loadStats();
+    } else {
+      setLoading(false);
+    }
+  }, [user]);
+
+  const loadStats = async () => {
+    try {
+      if (user?.centerId) {
+        const data = await studentService.getStats(user.centerId);
+        setStats(data);
+      }
+    } catch (error) {
+      console.error('Stats error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Spinner size="lg" />
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">
+          Xush kelibsiz, {user?.displayName}!
+        </h1>
+        <p className="text-gray-600 mt-2">
+          Bu sizning bosh sahifangiz
+        </p>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <Card className="bg-gradient-to-br from-primary-500 to-primary-600 text-white">
+          <div className="text-4xl font-bold mb-2">{stats.totalStudents}</div>
+          <div className="text-primary-100">Jami talabalar</div>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-success-500 to-success-600 text-white">
+          <div className="text-4xl font-bold mb-2">{stats.activeStudents}</div>
+          <div className="text-success-100">Faol talabalar</div>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-warning-500 to-warning-600 text-white">
+          <div className="text-4xl font-bold mb-2">{stats.frozenStudents}</div>
+          <div className="text-warning-100">Muzlatilgan</div>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-danger-500 to-danger-600 text-white">
+          <div className="text-4xl font-bold mb-2">
+            {stats.totalDebt.toLocaleString()}
+          </div>
+          <div className="text-danger-100">Jami qarz (so'm)</div>
+        </Card>
+      </div>
+
+      {/* Quick Actions */}
+      <Card>
+        <h2 className="text-xl font-semibold mb-4">Tezkor amallar</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Link
+            href="/admin/students/new"
+            className="p-4 bg-primary-50 hover:bg-primary-100 rounded-lg transition-colors"
+          >
+            <div className="text-2xl mb-2">👨‍🎓</div>
+            <div className="font-medium">Yangi talaba</div>
+          </Link>
+
+          <Link
+            href="/admin/groups/new"
+            className="p-4 bg-success-50 hover:bg-success-100 rounded-lg transition-colors"
+          >
+            <div className="text-2xl mb-2">📚</div>
+            <div className="font-medium">Yangi guruh</div>
+          </Link>
+
+          <Link
+            href="/admin/payments"
+            className="p-4 bg-warning-50 hover:bg-warning-100 rounded-lg transition-colors"
+          >
+            <div className="text-2xl mb-2">💰</div>
+            <div className="font-medium">To'lovlar</div>
+          </Link>
+        </div>
+      </Card>
+    </div>
+  );
+}
