@@ -20,6 +20,31 @@ export default function Sidebar() {
   const router = useRouter();
 
   const navigation: NavItem[] = [
+
+    {
+      name: 'Bosh sahifa',
+      href: '/superadmin',
+      icon: Icons.HomeIcon,
+      roles: ['superadmin'],
+    },
+    {
+      name: 'Markazlar',
+      href: '/superadmin/centers',
+      icon: Icons.HomeIcon, // Building icon bo'lishi kerak
+      roles: ['superadmin'],
+    },
+    {
+      name: 'Analitika',
+      href: '/superadmin/analytics',
+      icon: Icons.ChartBarIcon,
+      roles: ['superadmin'],
+    },
+    {
+      name: 'Sozlamalar',
+      href: '/superadmin/settings',
+      icon: Icons.Cog6ToothIcon,
+      roles: ['superadmin'],
+    },
     // CenterAdmin navigation
     {
       name: 'Bosh sahifa',
