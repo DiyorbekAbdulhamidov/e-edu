@@ -85,13 +85,11 @@ class AttendanceService {
       const dateStart = Timestamp.fromDate(new Date(date.setHours(0, 0, 0, 0)));
       const dateEnd = Timestamp.fromDate(new Date(date.setHours(23, 59, 59, 999)));
 
+      // TUZATILDI: Faqat centerId va groupId bo'yicha qidiramiz
       const q = query(
         collection(db, this.collectionName),
         where('centerId', '==', centerId),
-        where('groupId', '==', groupId),
-        where('studentId', '==', studentId),
-        where('date', '>=', dateStart),
-        where('date', '<=', dateEnd)
+        where('groupId', '==', groupId)
       );
 
       const querySnapshot = await getDocs(q);
@@ -100,8 +98,24 @@ class AttendanceService {
         return null;
       }
 
-      const doc = querySnapshot.docs[0];
-      return { id: doc.id, ...doc.data() } as Attendance;
+      // Client-side filter (studentId va date)
+      const filtered = querySnapshot.docs.filter(doc => {
+        const data = doc.data();
+        const docDate = data.date?.toDate();
+        return (
+          data.studentId === studentId &&
+          docDate &&
+          docDate >= dateStart.toDate() &&
+          docDate <= dateEnd.toDate()
+        );
+      });
+
+      if (filtered.length === 0) {
+        return null;
+      }
+
+      const firstDoc = filtered[0];
+      return { id: firstDoc.id, ...firstDoc.data() } as Attendance;
     } catch (error) {
       console.error('Find existing attendance error:', error);
       return null;
@@ -141,19 +155,28 @@ class AttendanceService {
       const dateStart = Timestamp.fromDate(new Date(date.setHours(0, 0, 0, 0)));
       const dateEnd = Timestamp.fromDate(new Date(date.setHours(23, 59, 59, 999)));
 
+      // TUZATILDI: Faqat centerId va groupId
       const q = query(
         collection(db, this.collectionName),
         where('centerId', '==', centerId),
-        where('groupId', '==', groupId),
-        where('date', '>=', dateStart),
-        where('date', '<=', dateEnd)
+        where('groupId', '==', groupId)
       );
 
       const querySnapshot = await getDocs(q);
       const attendance: Attendance[] = [];
 
+      // Client-side filter by date
       querySnapshot.forEach((doc) => {
-        attendance.push({ id: doc.id, ...doc.data() } as Attendance);
+        const data = doc.data();
+        const docDate = data.date?.toDate();
+
+        if (
+          docDate &&
+          docDate >= dateStart.toDate() &&
+          docDate <= dateEnd.toDate()
+        ) {
+          attendance.push({ id: doc.id, ...data } as Attendance);
+        }
       });
 
       return attendance;
@@ -173,30 +196,38 @@ class AttendanceService {
     endDate?: Date
   ): Promise<Attendance[]> {
     try {
-      const constraints: QueryConstraint[] = [
+      // TUZATILDI: Faqat centerId va studentId, orderBy olib tashlandi
+      const q = query(
+        collection(db, this.collectionName),
         where('centerId', '==', centerId),
-        where('studentId', '==', studentId),
-        orderBy('date', 'desc'),
-      ];
+        where('studentId', '==', studentId)
+      );
 
+      const querySnapshot = await getDocs(q);
+      let attendance: Attendance[] = [];
+
+      querySnapshot.forEach((doc) => {
+        attendance.push({ id: doc.id, ...doc.data() } as Attendance);
+      });
+
+      // Client-side filter by date range
       if (startDate) {
-        constraints.push(
-          where('date', '>=', Timestamp.fromDate(startDate))
+        attendance = attendance.filter(
+          (a) => a.date?.toDate() >= startDate
         );
       }
 
       if (endDate) {
-        constraints.push(
-          where('date', '<=', Timestamp.fromDate(endDate))
+        attendance = attendance.filter(
+          (a) => a.date?.toDate() <= endDate
         );
       }
 
-      const q = query(collection(db, this.collectionName), ...constraints);
-      const querySnapshot = await getDocs(q);
-      const attendance: Attendance[] = [];
-
-      querySnapshot.forEach((doc) => {
-        attendance.push({ id: doc.id, ...doc.data() } as Attendance);
+      // Client-side sorting
+      attendance.sort((a, b) => {
+        const dateA = a.date?.toDate()?.getTime() || 0;
+        const dateB = b.date?.toDate()?.getTime() || 0;
+        return dateB - dateA; // desc order
       });
 
       return attendance;
@@ -265,21 +296,32 @@ class AttendanceService {
     const dateStart = Timestamp.fromDate(new Date(date.setHours(0, 0, 0, 0)));
     const dateEnd = Timestamp.fromDate(new Date(date.setHours(23, 59, 59, 999)));
 
+    // TUZATILDI: Faqat centerId va groupId
     const q = query(
       collection(db, this.collectionName),
       where('centerId', '==', centerId),
-      where('groupId', '==', groupId),
-      where('date', '>=', dateStart),
-      where('date', '<=', dateEnd)
+      where('groupId', '==', groupId)
     );
 
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
         const attendance: Attendance[] = [];
+
+        // Client-side date filtering
         snapshot.forEach((doc) => {
-          attendance.push({ id: doc.id, ...doc.data() } as Attendance);
+          const data = doc.data();
+          const docDate = data.date?.toDate();
+
+          if (
+            docDate &&
+            docDate >= dateStart.toDate() &&
+            docDate <= dateEnd.toDate()
+          ) {
+            attendance.push({ id: doc.id, ...data } as Attendance);
+          }
         });
+
         callback(attendance);
       },
       (error) => {

@@ -153,20 +153,18 @@ class GroupService {
   /**
    * Guruhlar ro'yxatini olish
    */
+  // list() metodini o'zgartirish:
+
   async list(
     centerId: string,
     filters?: FilterParams,
     pagination?: PaginationParams
   ): Promise<{ groups: Group[]; hasMore: boolean }> {
     try {
+      // Faqat centerId, orderBy'siz
       const constraints: QueryConstraint[] = [
-        where('centerId', '==', centerId),
-        orderBy('createdAt', 'desc'),
+        where('centerId', '==', centerId)
       ];
-
-      if (filters?.status) {
-        constraints.push(where('status', '==', filters.status));
-      }
 
       if (pagination?.limit) {
         constraints.push(limit(pagination.limit));
@@ -179,27 +177,37 @@ class GroupService {
       const q = query(collection(db, this.collectionName), ...constraints);
       const querySnapshot = await getDocs(q);
 
-      const groups: Group[] = [];
+      let groups: Group[] = [];
       querySnapshot.forEach((doc) => {
         groups.push({ id: doc.id, ...doc.data() } as Group);
       });
 
-      // Search filter (client-side)
-      let filteredGroups = groups;
+      // Client-side filtering
+      if (filters?.status) {
+        groups = groups.filter(g => g.status === filters.status);
+      }
+
       if (filters?.search) {
         const searchLower = filters.search.toLowerCase();
-        filteredGroups = groups.filter(
+        groups = groups.filter(
           (group) =>
             group.name.toLowerCase().includes(searchLower) ||
             group.courseName.toLowerCase().includes(searchLower)
         );
       }
 
+      // Client-side sorting
+      groups.sort((a, b) => {
+        const aTime = a.createdAt?.seconds || 0;
+        const bTime = b.createdAt?.seconds || 0;
+        return bTime - aTime;
+      });
+
       const hasMore = pagination?.limit
         ? groups.length === pagination.limit
         : false;
 
-      return { groups: filteredGroups, hasMore };
+      return { groups, hasMore };
     } catch (error) {
       console.error('List groups error:', error);
       throw new Error('Guruhlar ro\'yxatini olishda xatolik');
@@ -214,37 +222,43 @@ class GroupService {
     callback: (groups: Group[]) => void,
     filters?: FilterParams
   ): () => void {
+    // Faqat centerId
     const constraints: QueryConstraint[] = [
-      where('centerId', '==', centerId),
-      orderBy('createdAt', 'desc'),
+      where('centerId', '==', centerId)
     ];
-
-    if (filters?.status) {
-      constraints.push(where('status', '==', filters.status));
-    }
 
     const q = query(collection(db, this.collectionName), ...constraints);
 
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        const groups: Group[] = [];
+        let groups: Group[] = [];
         snapshot.forEach((doc) => {
           groups.push({ id: doc.id, ...doc.data() } as Group);
         });
 
-        // Client-side search
-        let filteredGroups = groups;
+        // Client-side filtering
+        if (filters?.status) {
+          groups = groups.filter(g => g.status === filters.status);
+        }
+
         if (filters?.search) {
           const searchLower = filters.search.toLowerCase();
-          filteredGroups = groups.filter(
+          groups = groups.filter(
             (group) =>
               group.name.toLowerCase().includes(searchLower) ||
               group.courseName.toLowerCase().includes(searchLower)
           );
         }
 
-        callback(filteredGroups);
+        // Client-side sorting
+        groups.sort((a, b) => {
+          const aTime = a.createdAt?.seconds || 0;
+          const bTime = b.createdAt?.seconds || 0;
+          return bTime - aTime;
+        });
+
+        callback(groups);
       },
       (error) => {
         console.error('Group subscription error:', error);

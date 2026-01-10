@@ -11,7 +11,7 @@ export function useStudent(studentId: string, centerId: string) {
 
   useEffect(() => {
     if (!studentId || !centerId) {
-      setLoading(false);
+      setLoading(false);  
       return;
     }
 

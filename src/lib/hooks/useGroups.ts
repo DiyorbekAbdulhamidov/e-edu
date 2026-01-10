@@ -10,23 +10,30 @@ export function useGroups(centerId: string, filters?: FilterParams) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!centerId) {
+    if (!centerId || centerId === 'pending') {
       setLoading(false);
       return;
     }
 
+    let isSubscribed = true;
     setLoading(true);
+
     const unsubscribe = groupService.subscribe(
       centerId,
       (data) => {
-        setGroups(data);
-        setLoading(false);
-        setError(null);
+        if (isSubscribed) {
+          setGroups(data);
+          setLoading(false);
+          setError(null);
+        }
       },
       filters
     );
 
-    return () => unsubscribe();
+    return () => {
+      isSubscribed = false;
+      unsubscribe();
+    };
   }, [centerId, filters?.status, filters?.search]);
 
   return { groups, loading, error };

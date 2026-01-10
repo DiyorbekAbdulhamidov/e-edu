@@ -21,12 +21,35 @@ export default function LoginPage() {
     password: '',
   });
 
-  // Agar user allaqachon login qilgan bo'lsa
   useEffect(() => {
     if (user) {
-      const redirect = searchParams.get('redirect') || '/admin';
-      console.log('User allaqachon login qilgan, redirect:', redirect);
-      router.replace(redirect);
+      // Role bo'yicha redirect
+      const redirect = searchParams.get('redirect');
+
+      if (redirect) {
+        router.replace(redirect);
+      } else {
+        // Role bo'yicha default redirect
+        switch (user.role) {
+          case 'superadmin':
+            router.replace('/superadmin');
+            break;
+          case 'centeradmin':
+            router.replace('/admin');
+            break;
+          case 'teacher':
+            router.replace('/teacher');
+            break;
+          case 'student':
+            router.replace('/student');
+            break;
+          case 'parent':
+            router.replace('/parent');
+            break;
+          default:
+            router.replace('/admin');
+        }
+      }
     }
   }, [user, router, searchParams]);
 
@@ -47,20 +70,8 @@ export default function LoginPage() {
       const loggedInUser = await authService.login(formData);
       console.log('Login successful:', loggedInUser);
 
-      // Redirect URL'ni olish
-      const redirect = searchParams.get('redirect') || '/admin';
-      console.log('Redirecting to:', redirect);
-
-      // Router.replace ishlatish (push emas!)
-      router.replace(redirect);
-
-      // Backup: Agar router.replace ishlamasa
-      setTimeout(() => {
-        if (window.location.pathname !== redirect) {
-          console.log('Router.replace ishlamadi, window.location ishlatyapman');
-          window.location.href = redirect;
-        }
-      }, 500);
+      // User state yangilanadi, useEffect avtomatik redirect qiladi
+      // Bu yerda manual redirect QILMAYMIZ
 
     } catch (err: any) {
       console.error('Login error:', err);

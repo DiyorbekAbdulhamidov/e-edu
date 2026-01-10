@@ -155,23 +155,19 @@ class StudentService {
   /**
    * Talabalar ro'yxatini olish (pagination bilan)
    */
+  // list() metodini to'liq o'zgartirish:
+
   async list(
     centerId: string,
     filters?: FilterParams,
     pagination?: PaginationParams
   ): Promise<{ students: Student[]; hasMore: boolean }> {
     try {
+      // Faqat centerId bo'yicha filter, orderBy'siz
       const constraints: QueryConstraint[] = [
-        where('centerId', '==', centerId),
-        orderBy('createdAt', 'desc'),
+        where('centerId', '==', centerId)
       ];
 
-      // Status filter
-      if (filters?.status) {
-        constraints.push(where('status', '==', filters.status));
-      }
-
-      // Pagination
       if (pagination?.limit) {
         constraints.push(limit(pagination.limit));
       }
@@ -183,16 +179,19 @@ class StudentService {
       const q = query(collection(db, this.collectionName), ...constraints);
       const querySnapshot = await getDocs(q);
 
-      const students: Student[] = [];
+      let students: Student[] = [];
       querySnapshot.forEach((doc) => {
         students.push({ id: doc.id, ...doc.data() } as Student);
       });
 
-      // Search filter (client-side)
-      let filteredStudents = students;
+      // Client-side filtering va sorting
+      if (filters?.status) {
+        students = students.filter(s => s.status === filters.status);
+      }
+
       if (filters?.search) {
         const searchLower = filters.search.toLowerCase();
-        filteredStudents = students.filter(
+        students = students.filter(
           (student) =>
             student.firstName.toLowerCase().includes(searchLower) ||
             student.lastName.toLowerCase().includes(searchLower) ||
@@ -200,11 +199,18 @@ class StudentService {
         );
       }
 
+      // Client-side sorting by createdAt
+      students.sort((a, b) => {
+        const aTime = a.createdAt?.seconds || 0;
+        const bTime = b.createdAt?.seconds || 0;
+        return bTime - aTime;
+      });
+
       const hasMore = pagination?.limit
         ? students.length === pagination.limit
         : false;
 
-      return { students: filteredStudents, hasMore };
+      return { students, hasMore };
     } catch (error) {
       console.error('List students error:', error);
       throw new Error('Talabalar ro\'yxatini olishda xatolik');
@@ -219,30 +225,32 @@ class StudentService {
     callback: (students: Student[]) => void,
     filters?: FilterParams
   ): () => void {
+    // Faqat centerId filter, orderBy yo'q
     const constraints: QueryConstraint[] = [
-      where('centerId', '==', centerId),
-      orderBy('createdAt', 'desc'),
+      where('centerId', '==', centerId)
     ];
 
-    if (filters?.status) {
-      constraints.push(where('status', '==', filters.status));
-    }
+    // Status filter qo'shish (agar kerak bo'lsa)
+    // Lekin bu ham index talab qilishi mumkin, shuning uchun client-side qilamiz
 
     const q = query(collection(db, this.collectionName), ...constraints);
 
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        const students: Student[] = [];
+        let students: Student[] = [];
         snapshot.forEach((doc) => {
           students.push({ id: doc.id, ...doc.data() } as Student);
         });
 
-        // Client-side search
-        let filteredStudents = students;
+        // Client-side filtering
+        if (filters?.status) {
+          students = students.filter(s => s.status === filters.status);
+        }
+
         if (filters?.search) {
           const searchLower = filters.search.toLowerCase();
-          filteredStudents = students.filter(
+          students = students.filter(
             (student) =>
               student.firstName.toLowerCase().includes(searchLower) ||
               student.lastName.toLowerCase().includes(searchLower) ||
@@ -250,7 +258,14 @@ class StudentService {
           );
         }
 
-        callback(filteredStudents);
+        // Client-side sorting
+        students.sort((a, b) => {
+          const aTime = a.createdAt?.seconds || 0;
+          const bTime = b.createdAt?.seconds || 0;
+          return bTime - aTime;
+        });
+
+        callback(students);
       },
       (error) => {
         console.error('Student subscription error:', error);
