@@ -1,3 +1,4 @@
+// src/lib/types/teacher.types.ts - EXTENDED VERSION
 import { TenantEntity, SalaryType, Status } from './common.types';
 import { Timestamp } from 'firebase/firestore';
 
@@ -45,4 +46,82 @@ export interface TeacherPerformance {
   totalStudents: number;
   attendanceRate: number;
   monthlySalary: number;
+}
+
+// ========== YANGI TYPES ==========
+
+export interface TeacherSalaryHistory {
+  id: string;
+  teacherId: string;
+  centerId: string;
+  month: string; // "2025-01"
+  year: number;
+  amount: number;
+  salaryType: SalaryType;
+  studentsCount?: number; // for per_student type
+  groupsCount: number;
+  paidDate: Timestamp | null;
+  status: 'pending' | 'paid';
+  notes: string;
+  paidBy?: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface CreateSalaryHistoryData {
+  teacherId: string;
+  month: string;
+  year: number;
+  amount: number;
+  notes?: string;
+}
+
+export interface TeacherAnalytics {
+  teacherId: string;
+  teacherName: string;
+
+  // Groups & Students
+  totalGroups: number;
+  activeGroups: number;
+  totalStudents: number;
+  averageStudentsPerGroup: number;
+
+  // Attendance
+  totalClasses: number;
+  averageAttendanceRate: number;
+  bestAttendanceGroup: {
+    groupId: string;
+    groupName: string;
+    rate: number;
+  } | null;
+
+  // Salary
+  currentMonthlySalary: number;
+  last3MonthsSalary: number[];
+  totalEarnings: number;
+
+  // Performance Score (0-100)
+  performanceScore: number;
+}
+
+export interface BulkTeacherImport {
+  displayName: string;
+  email: string;
+  phone: string;
+  password: string;
+  subjects: string;
+  salaryType: 'fixed' | 'per_student';
+  salaryAmount: number;
+  qualification: string;
+}
+
+export interface BulkImportResult {
+  success: boolean;
+  successCount: number;
+  failedCount: number;
+  errors: Array<{
+    row: number;
+    email: string;
+    error: string;
+  }>;
 }

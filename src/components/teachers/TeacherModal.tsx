@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { teacherService } from '@/lib/services/teacherService';
 import { authService } from '@/lib/services/authService';
@@ -41,7 +41,6 @@ export default function TeacherModal({
     register,
     handleSubmit,
     formState: { errors },
-    watch,
   } = useForm<FormData>({
     defaultValues: {
       displayName: teacher?.displayName || '',
@@ -82,8 +81,8 @@ export default function TeacherModal({
 
         await teacherService.update(teacher.id, updateData, centerId);
 
-        // Update user info
-        await authService.update(teacher.id, {
+        // Update user info - TUZATILDI
+        await authService.updateUserProfile(teacher.id, {
           displayName: data.displayName,
           phone: data.phone,
         });
@@ -91,18 +90,31 @@ export default function TeacherModal({
         // Create new teacher
         if (!data.password || data.password.length < 6) {
           setError('Parol kamida 6 ta belgidan iborat bo\'lishi kerak');
+          setLoading(false);
           return;
         }
 
-        // Create user first
-        const userId = await authService.create({
-          email: data.email,
-          password: data.password,
-          displayName: data.displayName,
-          phone: data.phone,
-          role: 'teacher',
-          centerId,
+        // Create user via API - TUZATILDI
+        const response = await fetch('/api/users/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: data.email,
+            password: data.password,
+            displayName: data.displayName,
+            phone: data.phone,
+            role: 'teacher',
+            centerId,
+          }),
         });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error || 'User yaratishda xatolik');
+        }
+
+        const userId = result.userId;
 
         // Create teacher profile
         const createData: CreateTeacherData = {

@@ -95,6 +95,25 @@ export default function Sidebar() {
       roles: ['centeradmin'],
     },
 
+    {
+      name: 'Samaradorlik',
+      href: '/admin/teachers/performance',
+      icon: Icons.ChartBarIcon,
+      roles: ['centeradmin'],
+    },
+    {
+      name: 'Maosh',
+      href: '/admin/teachers/salary',
+      icon: Icons.CurrencyDollarIcon,
+      roles: ['centeradmin'],
+    },
+    {
+      name: 'Import',
+      href: '/admin/teachers/import',
+      icon: Icons.AcademicCapIcon,
+      roles: ['centeradmin'],
+    },
+
     // Teacher navigation
     {
       name: 'Bosh sahifa',

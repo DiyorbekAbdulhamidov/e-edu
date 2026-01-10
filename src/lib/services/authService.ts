@@ -19,7 +19,7 @@ import { auth, db } from '@/lib/firebase/config';
 import { CreateUserData, LoginCredentials, AuthUser } from '@/lib/types';
 
 class AuthService {
-  /* ================= REGISTER ================= */
+  /* ================= REGISTER (Self Registration) ================= */
   async register(data: CreateUserData): Promise<AuthUser> {
     try {
       const userCredential = await createUserWithEmailAndPassword(
@@ -58,9 +58,33 @@ class AuthService {
 
       const message = error.code
         ? this.getErrorMessage(error.code)
-        : error.message || 'Ro‘yxatdan o‘tishda xatolik';
+        : error.message || 'Ro\'yxatdan o\'tishda xatolik';
 
       throw new Error(message);
+    }
+  }
+
+  /* ================= CREATE USER (Admin creates user via API) ================= */
+  async createUser(data: CreateUserData): Promise<string> {
+    try {
+      const response = await fetch('/api/users/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Foydalanuvchi yaratishda xatolik');
+      }
+
+      return result.userId;
+    } catch (error: any) {
+      console.error('Create user error:', error);
+      throw new Error(error.message || 'Foydalanuvchi yaratishda xatolik');
     }
   }
 
@@ -155,7 +179,7 @@ class AuthService {
 
       const message = error.code
         ? this.getErrorMessage(error.code)
-        : error.message || 'Parolni o‘zgartirishda xatolik';
+        : error.message || 'Parolni o\'zgartirishda xatolik';
 
       throw new Error(message);
     }
@@ -197,12 +221,14 @@ class AuthService {
     try {
       const user = auth.currentUser;
 
-      if (user && data.displayName) {
+      // Only update Firebase Auth profile if it's the current user
+      if (user && user.uid === userId && data.displayName) {
         await updateProfile(user, {
           displayName: data.displayName,
         });
       }
 
+      // Always update Firestore
       await updateDoc(doc(db, 'users', userId), {
         ...data,
         updatedAt: serverTimestamp(),
@@ -216,18 +242,18 @@ class AuthService {
   /* ================= ERROR MAPPER ================= */
   private getErrorMessage(code: string): string {
     const errors: Record<string, string> = {
-      'auth/email-already-in-use': 'Bu email allaqachon ro‘yxatdan o‘tgan',
-      'auth/invalid-email': 'Email noto‘g‘ri formatda',
-      'auth/weak-password': 'Parol kamida 6 ta belgidan iborat bo‘lishi kerak',
+      'auth/email-already-in-use': 'Bu email allaqachon ro\'yxatdan o\'tgan',
+      'auth/invalid-email': 'Email noto\'g\'ri formatda',
+      'auth/weak-password': 'Parol kamida 6 ta belgidan iborat bo\'lishi kerak',
       'auth/user-disabled': 'Bu foydalanuvchi bloklangan',
       'auth/user-not-found': 'Foydalanuvchi topilmadi',
-      'auth/wrong-password': 'Email yoki parol noto‘g‘ri',
-      'auth/too-many-requests': 'Juda ko‘p urinish. Keyinroq urinib ko‘ring',
-      'auth/network-request-failed': 'Internet aloqasi yo‘q',
-      'auth/invalid-credential': 'Email yoki parol noto‘g‘ri',
+      'auth/wrong-password': 'Email yoki parol noto\'g\'ri',
+      'auth/too-many-requests': 'Juda ko\'p urinish. Keyinroq urinib ko\'ring',
+      'auth/network-request-failed': 'Internet aloqasi yo\'q',
+      'auth/invalid-credential': 'Email yoki parol noto\'g\'ri',
     };
 
-    return errors[code] || 'Noma’lum xatolik yuz berdi';
+    return errors[code] || 'Noma\'lum xatolik yuz berdi';
   }
 }
 
