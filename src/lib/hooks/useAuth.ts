@@ -1,9 +1,8 @@
-// lib/hooks/useAuth.ts - TUZATILGAN
 'use client';
 
 import { useState, useEffect } from 'react';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
-import { doc, onSnapshot } from 'firebase/firestore'; // ✅ onSnapshot qo'shing
+import { doc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase/config';
 import { AuthUser } from '@/lib/types';
 
@@ -20,7 +19,6 @@ export function useAuth() {
         return;
       }
 
-      // ✅ REAL-TIME FIRESTORE LISTENER
       const unsubUser = onSnapshot(
         doc(db, 'users', firebaseUser.uid),
         (userDoc) => {
@@ -31,26 +29,24 @@ export function useAuth() {
               email: firebaseUser.email!,
               displayName: userData.displayName,
               role: userData.role,
-              centerId: userData.centerId, // ✅ Avtomatik yangilanadi
+              centerId: userData.centerId,
             });
           } else {
             setUser(null);
-            setError('Foydalanuvchi ma\'lumotlari topilmadi');
+            setError('User document not found');
           }
           setLoading(false);
         },
         (err) => {
           console.error('User snapshot error:', err);
-          setError('Ma\'lumotlarni yuklashda xatolik');
+          setError('Failed to load user data');
           setLoading(false);
         }
       );
 
-      // Cleanup user listener
       return () => unsubUser();
     });
 
-    // Cleanup auth listener
     return () => unsubAuth();
   }, []);
 

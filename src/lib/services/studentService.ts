@@ -13,7 +13,6 @@ import {
   startAfter,
   Timestamp,
   serverTimestamp,
-  writeBatch,
   onSnapshot,
   QueryConstraint,
 } from 'firebase/firestore';
@@ -30,9 +29,6 @@ import {
 class StudentService {
   private collectionName = 'students';
 
-  /**
-   * Talaba yaratish
-   */
   async create(data: CreateStudentData, centerId: string, userId: string): Promise<string> {
     try {
       const studentData = {
@@ -63,9 +59,6 @@ class StudentService {
     }
   }
 
-  /**
-   * Talabani yangilash
-   */
   async update(
     studentId: string,
     data: UpdateStudentData,
@@ -99,9 +92,6 @@ class StudentService {
     }
   }
 
-  /**
-   * Talabani o'chirish
-   */
   async delete(studentId: string, centerId: string): Promise<void> {
     try {
       const studentRef = doc(db, this.collectionName, studentId);
@@ -115,7 +105,6 @@ class StudentService {
         throw new Error('Ruxsat yo\'q');
       }
 
-      // Talabaning guruhlarini tekshirish
       const student = studentDoc.data() as Student;
       if (student.groups && student.groups.length > 0) {
         throw new Error('Talaba guruhlardan chiqarilmagan');
@@ -128,9 +117,6 @@ class StudentService {
     }
   }
 
-  /**
-   * Bitta talabani olish
-   */
   async getById(studentId: string, centerId: string): Promise<Student | null> {
     try {
       const studentDoc = await getDoc(doc(db, this.collectionName, studentId));
@@ -152,10 +138,6 @@ class StudentService {
     }
   }
 
-  /**
-   * Talabalar ro'yxatini olish (pagination bilan)
-   */
-  // studentService.ts - TUZATILGAN VERSIYA
   async list(
     centerId: string,
     filters?: FilterParams,
@@ -166,12 +148,10 @@ class StudentService {
         where('centerId', '==', centerId)
       ];
 
-      // ✅ SERVER-SIDE FILTERING
       if (filters?.status) {
         constraints.push(where('status', '==', filters.status));
       }
 
-      // ✅ PAGINATION
       constraints.push(orderBy('createdAt', 'desc'));
 
       if (pagination?.limit) {
@@ -185,17 +165,14 @@ class StudentService {
       const q = query(collection(db, this.collectionName), ...constraints);
       const querySnapshot = await getDocs(q);
 
-      const students: Student[] = [];
+      let students: Student[] = [];
       querySnapshot.forEach((doc) => {
         students.push({ id: doc.id, ...doc.data() } as Student);
       });
 
-      // ⚠️ SEARCH faqat client-side (Firestore full-text qo'llab-quvvatlamaydi)
-      // VARIANT: Algolia/Meilisearch integration tavsiya etiladi
-      let filteredStudents = students;
       if (filters?.search) {
         const searchLower = filters.search.toLowerCase();
-        filteredStudents = students.filter(
+        students = students.filter(
           (student) =>
             student.firstName.toLowerCase().includes(searchLower) ||
             student.lastName.toLowerCase().includes(searchLower) ||
@@ -204,7 +181,7 @@ class StudentService {
       }
 
       return {
-        students: filteredStudents,
+        students,
         hasMore: students.length === (pagination?.limit || 50)
       };
     } catch (error) {
@@ -213,10 +190,6 @@ class StudentService {
     }
   }
 
-  /**
-   * Real-time listener
-   */
-  // studentService.ts - TUZATILGAN
   subscribe(
     centerId: string,
     callback: (students: Student[]) => void,
@@ -226,14 +199,12 @@ class StudentService {
       where('centerId', '==', centerId)
     ];
 
-    // ✅ SERVER-SIDE FILTER
     if (filters?.status) {
       constraints.push(where('status', '==', filters.status));
     }
 
-    // ✅ LIMIT (pagination bilan)
     constraints.push(orderBy('createdAt', 'desc'));
-    constraints.push(limit(filters?.limit || 50)); // Default 50
+    constraints.push(limit(filters?.limit || 100));
 
     const q = query(collection(db, this.collectionName), ...constraints);
 
@@ -245,7 +216,6 @@ class StudentService {
           students.push({ id: doc.id, ...doc.data() } as Student);
         });
 
-        // Search faqat client-side (unavoidable)
         if (filters?.search) {
           const searchLower = filters.search.toLowerCase();
           students = students.filter(
@@ -265,9 +235,7 @@ class StudentService {
 
     return unsubscribe;
   }
-  /**
-   * Talaba statistikasi
-   */
+
   async getStats(centerId: string): Promise<StudentStats> {
     try {
       const q = query(
@@ -305,9 +273,6 @@ class StudentService {
     }
   }
 
-  /**
-   * Talabani guruhga qo'shish
-   */
   async addToGroup(studentId: string, groupId: string, centerId: string): Promise<void> {
     try {
       const studentRef = doc(db, this.collectionName, studentId);
@@ -337,9 +302,6 @@ class StudentService {
     }
   }
 
-  /**
-   * Talabani guruhdan o'chirish
-   */
   async removeFromGroup(
     studentId: string,
     groupId: string,
@@ -369,9 +331,6 @@ class StudentService {
     }
   }
 
-  /**
-   * Talaba qarzini yangilash
-   */
   async updateDebt(studentId: string, amount: number, centerId: string): Promise<void> {
     try {
       const studentRef = doc(db, this.collectionName, studentId);

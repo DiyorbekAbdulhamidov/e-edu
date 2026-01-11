@@ -1,6 +1,24 @@
 {
   "indexes": [
     {
+      "collectionGroup": "students",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "centerId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "groups",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "centerId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "attendance",
       "queryScope": "COLLECTION",
       "fields": [
@@ -10,53 +28,21 @@
       ]
     },
     {
-      "collectionGroup": "students",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "centerId", "order": "ASCENDING" },
-        { "fieldPath": "createdAt", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "students",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "centerId", "order": "ASCENDING" },
-        { "fieldPath": "status", "order": "ASCENDING" },
-        { "fieldPath": "createdAt", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "groups",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "centerId", "order": "ASCENDING" },
-        { "fieldPath": "createdAt", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "groups",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "centerId", "order": "ASCENDING" },
-        { "fieldPath": "status", "order": "ASCENDING" },
-        { "fieldPath": "createdAt", "order": "DESCENDING" }
-      ]
-    },
-    {
       "collectionGroup": "payments",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "centerId", "order": "ASCENDING" },
+        { "fieldPath": "year", "order": "DESCENDING" },
         { "fieldPath": "paymentDate", "order": "DESCENDING" }
       ]
     },
     {
-      "collectionGroup": "payments",
+      "collectionGroup": "teacher_salaries",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "centerId", "order": "ASCENDING" },
-        { "fieldPath": "month", "order": "ASCENDING" }
+        { "fieldPath": "teacherId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
     }
   ],

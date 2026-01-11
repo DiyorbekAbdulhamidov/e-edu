@@ -1,36 +1,112 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# e-edu CRM - Multi-Tenant Education Management System
 
-## Getting Started
+## Features
+- Multi-tenant architecture
+- Role-based access control (SuperAdmin, CenterAdmin, Teacher, Student, Parent)
+- Student management
+- Group & course management
+- Attendance tracking
+- Payment processing
+- Teacher performance analytics
+- Automated salary calculations
+- Comprehensive reporting
 
-First, run the development server:
+## Tech Stack
+- Next.js 15 (App Router)
+- React 19
+- TypeScript 5.7
+- Firebase (Auth + Firestore)
+- Tailwind CSS 3.4
 
+## Setup
+
+1. Clone repository
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <repo-url>
+cd e-edu-crm
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Install dependencies
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Configure Firebase
+```bash
+cp .env.example .env.local
+# Add your Firebase credentials
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. Deploy Firestore indexes
+```bash
+firebase deploy --only firestore:indexes
+```
 
-## Learn More
+5. Run development server
+```bash
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Firestore Security Rules
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isSuperAdmin() {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin';
+    }
+    
+    function isCenterAdmin(centerId) {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'centeradmin' &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.centerId == centerId;
+    }
+    
+    match /centers/{centerId} {
+      allow read: if isSuperAdmin() || isCenterAdmin(centerId);
+      allow create: if isSuperAdmin();
+      allow update: if isSuperAdmin() || isCenterAdmin(centerId);
+    }
+    
+    match /students/{studentId} {
+      allow read: if isAuthenticated() && 
+        (isSuperAdmin() || isCenterAdmin(resource.data.centerId));
+      allow write: if isCenterAdmin(request.resource.data.centerId);
+    }
+    
+    match /groups/{groupId} {
+      allow read, write: if isAuthenticated() && 
+        (isSuperAdmin() || isCenterAdmin(resource.data.centerId));
+    }
+    
+    match /attendance/{attendanceId} {
+      allow read, write: if isAuthenticated() && 
+        (isSuperAdmin() || isCenterAdmin(resource.data.centerId));
+    }
+    
+    match /payments/{paymentId} {
+      allow read, write: if isAuthenticated() && 
+        (isSuperAdmin() || isCenterAdmin(resource.data.centerId));
+    }
+    
+    match /teachers/{teacherId} {
+      allow read, write: if isAuthenticated() && 
+        (isSuperAdmin() || isCenterAdmin(resource.data.centerId));
+    }
+  }
+}
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deployment
+```bash
+npm run build
+npm run start
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## License
+Proprietary

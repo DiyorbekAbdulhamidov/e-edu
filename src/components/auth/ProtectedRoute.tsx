@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { usePermissions } from '@/lib/hooks/usePermissions';
 import { UserRole } from '@/lib/types';
+import Spinner from '@/components/ui/Spinner';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -23,36 +24,31 @@ export default function ProtectedRoute({
 
   useEffect(() => {
     if (!loading) {
-      // Foydalanuvchi yo'q bo'lsa, login sahifasiga yo'naltirish
       if (!user) {
         router.push('/login');
         return;
       }
 
-      // Role tekshirish
       if (allowedRoles && !allowedRoles.includes(user.role)) {
-        router.push('/unauthorized');
+        router.push('/login');
         return;
       }
 
-      // Permission tekshirish
       if (requiredPermission && !canAccessRoute(requiredPermission)) {
-        router.push('/unauthorized');
+        router.push('/login');
         return;
       }
     }
   }, [user, loading, allowedRoles, requiredPermission, router, canAccessRoute]);
 
-  // Loading holati
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <Spinner size="lg" />
       </div>
     );
   }
 
-  // Foydalanuvchi yo'q yoki ruxsat yo'q bo'lsa
   if (!user || (allowedRoles && !allowedRoles.includes(user.role))) {
     return null;
   }

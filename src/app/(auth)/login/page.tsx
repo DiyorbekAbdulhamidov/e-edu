@@ -22,36 +22,24 @@ export default function LoginPage() {
   });
 
   useEffect(() => {
-    if (user) {
-      // Role bo'yicha redirect
+    if (user && !loading) {
       const redirect = searchParams.get('redirect');
 
       if (redirect) {
         router.replace(redirect);
       } else {
-        // Role bo'yicha default redirect
-        switch (user.role) {
-          case 'superadmin':
-            router.replace('/superadmin');
-            break;
-          case 'centeradmin':
-            router.replace('/admin');
-            break;
-          case 'teacher':
-            router.replace('/teacher');
-            break;
-          case 'student':
-            router.replace('/student');
-            break;
-          case 'parent':
-            router.replace('/parent');
-            break;
-          default:
-            router.replace('/admin');
-        }
+        const roleRoutes = {
+          superadmin: '/superadmin',
+          centeradmin: '/admin',
+          teacher: '/teacher',
+          student: '/student',
+          parent: '/parent',
+        };
+
+        router.replace(roleRoutes[user.role] || '/admin');
       }
     }
-  }, [user, router, searchParams]);
+  }, [user, loading, router, searchParams]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -60,59 +48,22 @@ export default function LoginPage() {
     });
   };
 
-  // login/page.tsx - TUZATILGAN
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
     try {
-      console.log('Login attempt:', formData.email);
-      const loggedInUser = await authService.login(formData);
-      console.log('Login successful:', loggedInUser);
-
-      // ✅ DARHOL REDIRECT (useEffect kutilmaydi)
-      const redirect = searchParams.get('redirect');
-
-      if (redirect) {
-        router.replace(redirect);
-      } else {
-        switch (loggedInUser.role) {
-          case 'superadmin':
-            router.replace('/superadmin');
-            break;
-          case 'centeradmin':
-            router.replace('/admin');
-            break;
-          case 'teacher':
-            router.replace('/teacher');
-            break;
-          case 'student':
-            router.replace('/student');
-            break;
-          case 'parent':
-            router.replace('/parent');
-            break;
-          default:
-            router.replace('/admin');
-        }
-      }
+      await authService.login(formData);
     } catch (err: any) {
-      console.error('Login error:', err);
       setError(err.message);
-      setLoading(false); // ⚠️ Faqat error bo'lsa loading = false
+      setLoading(false);
     }
-    // ⚠️ SUCCESS bo'lsa loading = true qoladi (redirect bo'lguncha)
   };
 
-  // useEffect O'CHIRILSIN yoki faqat logout uchun qoldirilsin
-  useEffect(() => {
-    // Faqat logout qilganda login'ga qaytarish
-    if (user && user.centerId !== 'pending') {
-      // Already logged in, redirect to dashboard
-      router.replace('/admin'); // yoki role-based
-    }
-  }, [user, router]);
+  if (user) {
+    return null;
+  }
 
   return (
     <Card className="p-8">
@@ -153,7 +104,7 @@ export default function LoginPage() {
         )}
 
         <Button type="submit" fullWidth loading={loading} disabled={loading}>
-          {loading ? 'Kirish...' : 'Kirish'}
+          Kirish
         </Button>
 
         <div className="text-center text-sm text-gray-600">
