@@ -17,11 +17,12 @@ export default function AdminDashboard() {
     totalDebt: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (user?.centerId && user.centerId !== 'pending') {
       loadStats();
-    } else {
+    } else if (user?.centerId === 'pending') {
       setLoading(false);
     }
   }, [user]);
@@ -31,28 +32,30 @@ export default function AdminDashboard() {
       if (user?.centerId && user.centerId !== 'pending') {
         const data = await studentService.getStats(user.centerId);
         setStats(data);
+        setError(null);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Stats error:', error);
+      setError(error.message);
     } finally {
       setLoading(false);
     }
   };
 
-  // Agar centerId pending bo'lsa
   if (user?.centerId === 'pending') {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex items-center justify-center min-h-[60vh]">
         <Card className="max-w-md text-center p-8">
+          <div className="text-6xl mb-4">⏳</div>
           <h2 className="text-xl font-bold text-gray-900 mb-4">
-            ⏳ Hisobingiz tayyorlanmoqda
+            Hisobingiz tayyorlanmoqda
           </h2>
           <p className="text-gray-600 mb-4">
             Markazingiz yaratilmoqda. Iltimos, bir oz kuting va sahifani yangilang.
           </p>
           <button
             onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+            className="px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
           >
             Sahifani yangilash
           </button>
@@ -69,6 +72,20 @@ export default function AdminDashboard() {
     );
   }
 
+  if (error) {
+    return (
+      <Card className="text-center py-12">
+        <p className="text-danger-600 mb-4">Xatolik: {error}</p>
+        <button
+          onClick={loadStats}
+          className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+        >
+          Qayta urinish
+        </button>
+      </Card>
+    );
+  }
+
   return (
     <div>
       <div className="mb-8">
@@ -80,7 +97,6 @@ export default function AdminDashboard() {
         </p>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <Card className="bg-gradient-to-br from-primary-500 to-primary-600 text-white">
           <div className="text-4xl font-bold mb-2">{stats.totalStudents}</div>
@@ -105,7 +121,6 @@ export default function AdminDashboard() {
         </Card>
       </div>
 
-      {/* Quick Actions */}
       <Card>
         <h2 className="text-xl font-semibold mb-4">Tezkor amallar</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

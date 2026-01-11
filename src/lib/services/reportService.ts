@@ -3,8 +3,6 @@ import {
   getDocs,
   query,
   where,
-  orderBy,
-  Timestamp,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { studentService } from './studentService';
@@ -42,9 +40,6 @@ interface TeacherPerformance {
 }
 
 class ReportService {
-  /**
-   * Oylik daromad hisoboti
-   */
   async getIncomeReport(
     centerId: string,
     year: number
@@ -64,7 +59,7 @@ class ReportService {
           month: monthStr,
           totalIncome: income.totalIncome,
           paymentsCount: income.paymentsCount,
-          studentsCount: 0, // Bu joyda hisoblash kerak
+          studentsCount: 0,
         });
       }
 
@@ -75,9 +70,6 @@ class ReportService {
     }
   }
 
-  /**
-   * Qarzlar hisoboti
-   */
   async getDebtReport(centerId: string): Promise<DebtReport[]> {
     try {
       const studentsData = await studentService.list(centerId, {});
@@ -101,9 +93,6 @@ class ReportService {
     }
   }
 
-  /**
-   * Davomat hisoboti
-   */
   async getAttendanceReport(centerId: string): Promise<AttendanceReport[]> {
     try {
       const groupsData = await groupService.list(centerId, {});
@@ -114,7 +103,6 @@ class ReportService {
       for (const group of groups) {
         if (group.status !== 'active') continue;
 
-        // Guruh uchun o'rtacha davomatni hisoblash
         const attendanceQuery = query(
           collection(db, 'attendance'),
           where('centerId', '==', centerId),
@@ -123,7 +111,7 @@ class ReportService {
 
         const attendanceSnapshot = await getDocs(attendanceQuery);
         let presentCount = 0;
-        let totalCount = attendanceSnapshot.size;
+        const totalCount = attendanceSnapshot.size;
 
         attendanceSnapshot.forEach((doc) => {
           if (doc.data().status === 'present') {
@@ -149,9 +137,6 @@ class ReportService {
     }
   }
 
-  /**
-   * O'qituvchilar samaradorligi
-   */
   async getTeacherPerformance(
     centerId: string
   ): Promise<TeacherPerformance[]> {
@@ -159,18 +144,19 @@ class ReportService {
       const groupsData = await groupService.list(centerId, {});
       const groups = groupsData.groups;
 
-      const teacherMap = new Map<string, {
-        name: string;
-        groups: string[];
-        students: number;
-      }>();
+      const teacherMap = new Map<
+        string,
+        {
+          name: string;
+          groups: string[];
+          students: number,
+        }
+      >();
 
-      // Guruhlar bo'yicha o'qituvchilarni guruhlash
       for (const group of groups) {
         if (group.status !== 'active') continue;
 
         if (!teacherMap.has(group.teacherId)) {
-          // O'qituvchi ismini olish
           const userDoc = await getDocs(
             query(
               collection(db, 'users'),
@@ -191,11 +177,9 @@ class ReportService {
         teacher.students += group.currentStudents;
       }
 
-      // Performance hisoboti
       const performance: TeacherPerformance[] = [];
 
       for (const [teacherId, data] of teacherMap.entries()) {
-        // O'rtacha davomatni hisoblash
         let totalAttendance = 0;
         let attendanceCount = 0;
 
@@ -203,20 +187,17 @@ class ReportService {
           const attendanceQuery = query(
             collection(db, 'attendance'),
             where('centerId', '==', centerId),
-            where('groupId', '==', groupId),
-            where('status', '==', 'present')
+            where('groupId', '==', groupId)
           );
 
           const snapshot = await getDocs(attendanceQuery);
-          totalAttendance += snapshot.size;
 
-          const allAttendanceQuery = query(
-            collection(db, 'attendance'),
-            where('centerId', '==', centerId),
-            where('groupId', '==', groupId)
-          );
-          const allSnapshot = await getDocs(allAttendanceQuery);
-          attendanceCount += allSnapshot.size;
+          snapshot.forEach((doc) => {
+            if (doc.data().status === 'present') {
+              totalAttendance++;
+            }
+            attendanceCount++;
+          });
         }
 
         const averageAttendance =
@@ -238,21 +219,26 @@ class ReportService {
     }
   }
 
-  /**
-   * Export to CSV
-   */
   exportToCSV(data: any[], filename: string): void {
     if (data.length === 0) return;
 
     const headers = Object.keys(data[0]);
-    const csvContent = [
-      headers.join(','),
-      ...data.map((row) =>
-        headers.map((header) => JSON.stringify(row[header] || '')).join(',')
-      ),
-    ].join('\n');
+    const csvRows = [];
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    csvRows.push(headers.join(','));
+
+    for (const row of data) {
+      const values = headers.map((header) => {
+        const val = row[header];
+        const escaped = ('' + val).replace(/"/g, '\\"');
+        return `"${escaped}"`;
+      });
+      csvRows.push(values.join(','));
+    }
+
+    const csvContent = csvRows.join('\n');
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
 

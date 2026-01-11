@@ -11,9 +11,10 @@ export default function AttendanceReportPage() {
   const { user } = useAuthContext();
   const [report, setReport] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (user?.centerId) {
+    if (user?.centerId && user.centerId !== 'pending') {
       loadReport();
     }
   }, [user]);
@@ -21,23 +22,24 @@ export default function AttendanceReportPage() {
   const loadReport = async () => {
     try {
       setLoading(true);
+      setError(null);
       const data = await reportService.getAttendanceReport(user!.centerId!);
       setReport(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Load report error:', error);
+      setError(error.message);
     } finally {
       setLoading(false);
     }
   };
 
   const handleExport = () => {
+    if (report.length === 0) {
+      alert("Export qilish uchun ma'lumot yo'q");
+      return;
+    }
     reportService.exportToCSV(report, 'attendance_report');
   };
-
-  const averageAttendance =
-    report.length > 0
-      ? report.reduce((sum, r) => sum + r.averageAttendance, 0) / report.length
-      : 0;
 
   if (loading) {
     return (
@@ -46,6 +48,11 @@ export default function AttendanceReportPage() {
       </div>
     );
   }
+
+  const averageAttendance =
+    report.length > 0
+      ? report.reduce((sum, r) => sum + r.averageAttendance, 0) / report.length
+      : 0;
 
   return (
     <div>
@@ -59,10 +66,20 @@ export default function AttendanceReportPage() {
           </p>
         </div>
 
-        <Button onClick={handleExport}>Export CSV</Button>
+        <Button onClick={handleExport} disabled={report.length === 0}>
+          Export CSV
+        </Button>
       </div>
 
-      {/* Summary */}
+      {error && (
+        <Card className="mb-6 bg-danger-50 border-danger-200">
+          <p className="text-danger-700">{error}</p>
+          <Button onClick={loadReport} className="mt-4">
+            Qayta urinish
+          </Button>
+        </Card>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <Card className="bg-gradient-to-br from-primary-500 to-primary-600 text-white">
           <div className="text-3xl font-bold mb-2">{report.length}</div>
@@ -77,50 +94,62 @@ export default function AttendanceReportPage() {
         </Card>
       </div>
 
-      {/* Table */}
       <Card>
-        <div className="overflow-x-auto">
-          <table className="table">
-            <thead className="table-header">
-              <tr>
-                <th className="table-header-cell">Guruh</th>
-                <th className="table-header-cell">Talabalar</th>
-                <th className="table-header-cell">Davomat</th>
-                <th className="table-header-cell">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {report.map((row) => (
-                <tr key={row.groupId} className="table-row">
-                  <td className="table-cell font-medium">{row.groupName}</td>
-                  <td className="table-cell">{row.totalStudents}</td>
-                  <td className="table-cell">
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 bg-gray-200 rounded-full h-2">
-                        <div
-                          className={`h-2 rounded-full ${row.averageAttendance >= 80
-                              ? 'bg-success-500'
-                              : row.averageAttendance >= 60
-                                ? 'bg-warning-500'
-                                : 'bg-danger-500'
-                            }`}
-                          style={{ width: `${row.averageAttendance}%` }}
-                        />
-                      </div>
-                      <span className="font-semibold">
-                        {row.averageAttendance}%
-                      </span>
-                    </div>
-                  </td>
-                  <td className="table-cell">
-                    {row.averageAttendance >= 80 ? '✅ Yaxshi' :
-                      row.averageAttendance >= 60 ? '⚠️ O\'rtacha' : '❌ Past'}
-                  </td>
+        {report.length === 0 ? (
+          <p className="text-center text-gray-500 py-12">
+            Ma'lumot topilmadi
+          </p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="table">
+              <thead className="table-header">
+                <tr>
+                  <th className="table-header-cell">Guruh</th>
+                  <th className="table-header-cell">Talabalar</th>
+                  <th className="table-header-cell">Davomat</th>
+                  <th className="table-header-cell">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {report.map((row) => (
+                  <tr key={row.groupId} className="table-row">
+                    <td className="table-cell font-medium">
+                      {row.groupName}
+                    </td>
+                    <td className="table-cell">
+                      {row.totalStudents}
+                    </td>
+                    <td className="table-cell">
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 bg-gray-200 rounded-full h-2">
+                          <div
+                            className={`h-2 rounded-full ${row.averageAttendance >= 80
+                                ? 'bg-success-500'
+                                : row.averageAttendance >= 60
+                                  ? 'bg-warning-500'
+                                  : 'bg-danger-500'
+                              }`}
+                            style={{ width: `${row.averageAttendance}%` }}
+                          />
+                        </div>
+                        <span className="font-semibold">
+                          {row.averageAttendance.toFixed(1)}%
+                        </span>
+                      </div>
+                    </td>
+                    <td className="table-cell">
+                      {row.averageAttendance >= 80
+                        ? '✅ Yaxshi'
+                        : row.averageAttendance >= 60
+                          ? "⚠️ O‘rtacha"
+                          : '❌ Past'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </Card>
     </div>
   );

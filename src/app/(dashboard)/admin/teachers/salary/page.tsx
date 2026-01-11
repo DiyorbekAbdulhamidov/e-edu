@@ -1,4 +1,3 @@
-// src/app/(dashboard)/admin/teachers/salary/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -8,6 +7,7 @@ import { teacherSalaryService } from '@/lib/services/teacherSalaryService';
 import { TeacherSalaryHistory } from '@/lib/types';
 import Card from '@/components/ui/Card';
 import Spinner from '@/components/ui/Spinner';
+import Button from '@/components/ui/Button';
 
 export default function TeacherSalaryPage() {
   const { user } = useAuth();
@@ -16,6 +16,7 @@ export default function TeacherSalaryPage() {
   const [salaryHistory, setSalaryHistory] = useState<TeacherSalaryHistory[]>([]);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const selectedTeacher = teachers.find(t => t.id === selectedTeacherId);
 
@@ -28,13 +29,15 @@ export default function TeacherSalaryPage() {
   const loadSalaryHistory = async () => {
     try {
       setLoading(true);
+      setError(null);
       const data = await teacherSalaryService.getTeacherSalaryHistory(
         selectedTeacherId,
         user!.centerId!
       );
       setSalaryHistory(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Load salary history error:', error);
+      setError(error.message);
     } finally {
       setLoading(false);
     }
@@ -47,11 +50,15 @@ export default function TeacherSalaryPage() {
 
     try {
       setGenerating(true);
+      setError(null);
       const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth() + 1;
+
       const result = await teacherSalaryService.generateMonthlySalariesForAllTeachers(
         user!.centerId!,
-        now.getFullYear(),
-        now.getMonth() + 1
+        year,
+        month
       );
 
       alert(`Muvaffaqiyatli: ${result.success} ta, Xato: ${result.failed} ta`);
@@ -60,6 +67,7 @@ export default function TeacherSalaryPage() {
         loadSalaryHistory();
       }
     } catch (error: any) {
+      setError(error.message);
       alert('Xatolik: ' + error.message);
     } finally {
       setGenerating(false);
@@ -84,7 +92,7 @@ export default function TeacherSalaryPage() {
 
   if (teachersLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-[60vh]">
         <Spinner size="lg" />
       </div>
     );
@@ -99,7 +107,7 @@ export default function TeacherSalaryPage() {
     .reduce((sum, s) => sum + s.amount, 0);
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div>
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
@@ -110,16 +118,21 @@ export default function TeacherSalaryPage() {
           </p>
         </div>
 
-        <button
+        <Button
           onClick={handleGenerateMonthlySalaries}
           disabled={generating}
-          className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium disabled:opacity-50"
+          loading={generating}
         >
-          {generating ? 'Yaratilmoqda...' : '🔄 Oylik maosh yaratish'}
-        </button>
+          🔄 Oylik maosh yaratish
+        </Button>
       </div>
 
-      {/* Teacher Selection */}
+      {error && (
+        <Card className="mb-6 bg-danger-50 border-danger-200">
+          <p className="text-danger-700">{error}</p>
+        </Card>
+      )}
+
       <Card className="mb-6">
         <label className="block text-sm font-medium text-gray-700 mb-2">
           O'qituvchini tanlang
@@ -140,7 +153,6 @@ export default function TeacherSalaryPage() {
 
       {selectedTeacherId && (
         <>
-          {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
             <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white">
               <div className="text-3xl font-bold mb-2">
@@ -164,7 +176,6 @@ export default function TeacherSalaryPage() {
             </Card>
           </div>
 
-          {/* Salary History Table */}
           <Card>
             <h2 className="text-lg font-semibold mb-4">Maosh tarixi</h2>
 
@@ -207,9 +218,7 @@ export default function TeacherSalaryPage() {
                         key={salary.id}
                         className="border-b border-gray-200 hover:bg-gray-50"
                       >
-                        <td className="px-6 py-4">
-                          {salary.month}
-                        </td>
+                        <td className="px-6 py-4">{salary.month}</td>
                         <td className="px-6 py-4 font-semibold text-green-600">
                           {salary.amount.toLocaleString()} so'm
                         </td>

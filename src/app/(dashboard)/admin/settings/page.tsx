@@ -14,6 +14,7 @@ export default function AdminSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [center, setCenter] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const [centerData, setCenterData] = useState({
     name: '',
@@ -44,8 +45,10 @@ export default function AdminSettingsPage() {
         address: data?.address || '',
         email: data?.email || '',
       });
-    } catch (error) {
+      setError(null);
+    } catch (error: any) {
       console.error('Load center error:', error);
+      setError(error.message);
     } finally {
       setLoading(false);
     }
@@ -53,13 +56,31 @@ export default function AdminSettingsPage() {
 
   const handleCenterUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!centerData.name.trim()) {
+      alert('Markaz nomini kiriting');
+      return;
+    }
+
+    if (!centerData.phone.trim()) {
+      alert('Telefon raqamini kiriting');
+      return;
+    }
+
+    if (!centerData.email.trim()) {
+      alert('Email kiriting');
+      return;
+    }
+
     setSaving(true);
+    setError(null);
 
     try {
       await centerService.update(user!.centerId!, centerData);
       alert('Markaz ma\'lumotlari yangilandi!');
       loadCenter();
     } catch (error: any) {
+      setError(error.message);
       alert('Xatolik: ' + error.message);
     } finally {
       setSaving(false);
@@ -69,6 +90,16 @@ export default function AdminSettingsPage() {
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!passwordData.currentPassword) {
+      alert('Joriy parolni kiriting');
+      return;
+    }
+
+    if (!passwordData.newPassword) {
+      alert('Yangi parolni kiriting');
+      return;
+    }
+
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       alert('Yangi parollar bir xil emas');
       return;
@@ -76,6 +107,11 @@ export default function AdminSettingsPage() {
 
     if (passwordData.newPassword.length < 6) {
       alert('Parol kamida 6 ta belgidan iborat bo\'lishi kerak');
+      return;
+    }
+
+    if (passwordData.newPassword === passwordData.currentPassword) {
+      alert('Yangi parol joriy paroldan farq qilishi kerak');
       return;
     }
 
@@ -116,8 +152,13 @@ export default function AdminSettingsPage() {
         </p>
       </div>
 
+      {error && (
+        <Card className="mb-6 bg-danger-50 border-danger-200">
+          <p className="text-danger-700">{error}</p>
+        </Card>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Center Settings */}
         <Card>
           <h2 className="text-lg font-semibold mb-4">Markaz ma'lumotlari</h2>
           <form onSubmit={handleCenterUpdate} className="space-y-4">
@@ -165,13 +206,12 @@ export default function AdminSettingsPage() {
               />
             </div>
 
-            <Button type="submit" loading={saving}>
+            <Button type="submit" loading={saving} disabled={saving}>
               Saqlash
             </Button>
           </form>
         </Card>
 
-        {/* Password Change */}
         <Card>
           <h2 className="text-lg font-semibold mb-4">Parolni o'zgartirish</h2>
           <form onSubmit={handlePasswordChange} className="space-y-4">
@@ -199,6 +239,7 @@ export default function AdminSettingsPage() {
                 })
               }
               required
+              helperText="Kamida 6 ta belgi"
             />
 
             <Input
@@ -214,13 +255,12 @@ export default function AdminSettingsPage() {
               required
             />
 
-            <Button type="submit" loading={saving}>
+            <Button type="submit" loading={saving} disabled={saving}>
               Parolni o'zgartirish
             </Button>
           </form>
         </Card>
 
-        {/* Center Info */}
         <Card className="lg:col-span-2 bg-primary-50">
           <h2 className="text-lg font-semibold mb-4">Markaz ma'lumotlari</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

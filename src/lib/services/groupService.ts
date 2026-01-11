@@ -30,9 +30,6 @@ import {
 class GroupService {
   private collectionName = 'groups';
 
-  /**
-   * Guruh yaratish
-   */
   async create(data: CreateGroupData, centerId: string, userId: string): Promise<string> {
     try {
       const groupData = {
@@ -62,9 +59,6 @@ class GroupService {
     }
   }
 
-  /**
-   * Guruhni yangilash
-   */
   async update(
     groupId: string,
     data: UpdateGroupData,
@@ -98,9 +92,6 @@ class GroupService {
     }
   }
 
-  /**
-   * Guruhni o'chirish
-   */
   async delete(groupId: string, centerId: string): Promise<void> {
     try {
       const groupRef = doc(db, this.collectionName, groupId);
@@ -126,9 +117,6 @@ class GroupService {
     }
   }
 
-  /**
-   * Bitta guruhni olish
-   */
   async getById(groupId: string, centerId: string): Promise<Group | null> {
     try {
       const groupDoc = await getDoc(doc(db, this.collectionName, groupId));
@@ -150,21 +138,22 @@ class GroupService {
     }
   }
 
-  /**
-   * Guruhlar ro'yxatini olish
-   */
-  // list() metodini o'zgartirish:
-
   async list(
     centerId: string,
     filters?: FilterParams,
     pagination?: PaginationParams
   ): Promise<{ groups: Group[]; hasMore: boolean }> {
     try {
-      // Faqat centerId, orderBy'siz
       const constraints: QueryConstraint[] = [
         where('centerId', '==', centerId)
       ];
+
+      if (filters?.status) {
+        constraints.push(where('status', '==', filters.status));
+        constraints.push(orderBy('createdAt', 'desc'));
+      } else {
+        constraints.push(orderBy('createdAt', 'desc'));
+      }
 
       if (pagination?.limit) {
         constraints.push(limit(pagination.limit));
@@ -182,11 +171,6 @@ class GroupService {
         groups.push({ id: doc.id, ...doc.data() } as Group);
       });
 
-      // Client-side filtering
-      if (filters?.status) {
-        groups = groups.filter(g => g.status === filters.status);
-      }
-
       if (filters?.search) {
         const searchLower = filters.search.toLowerCase();
         groups = groups.filter(
@@ -196,36 +180,33 @@ class GroupService {
         );
       }
 
-      // Client-side sorting
-      groups.sort((a, b) => {
-        const aTime = a.createdAt?.seconds || 0;
-        const bTime = b.createdAt?.seconds || 0;
-        return bTime - aTime;
-      });
-
-      const hasMore = pagination?.limit
-        ? groups.length === pagination.limit
-        : false;
-
-      return { groups, hasMore };
+      return {
+        groups,
+        hasMore: groups.length === (pagination?.limit || 100)
+      };
     } catch (error) {
       console.error('List groups error:', error);
       throw new Error('Guruhlar ro\'yxatini olishda xatolik');
     }
   }
 
-  /**
-   * Real-time listener
-   */
   subscribe(
     centerId: string,
     callback: (groups: Group[]) => void,
     filters?: FilterParams
   ): () => void {
-    // Faqat centerId
     const constraints: QueryConstraint[] = [
       where('centerId', '==', centerId)
     ];
+
+    if (filters?.status) {
+      constraints.push(where('status', '==', filters.status));
+      constraints.push(orderBy('createdAt', 'desc'));
+    } else {
+      constraints.push(orderBy('createdAt', 'desc'));
+    }
+
+    constraints.push(limit(100));
 
     const q = query(collection(db, this.collectionName), ...constraints);
 
@@ -237,11 +218,6 @@ class GroupService {
           groups.push({ id: doc.id, ...doc.data() } as Group);
         });
 
-        // Client-side filtering
-        if (filters?.status) {
-          groups = groups.filter(g => g.status === filters.status);
-        }
-
         if (filters?.search) {
           const searchLower = filters.search.toLowerCase();
           groups = groups.filter(
@@ -250,13 +226,6 @@ class GroupService {
               group.courseName.toLowerCase().includes(searchLower)
           );
         }
-
-        // Client-side sorting
-        groups.sort((a, b) => {
-          const aTime = a.createdAt?.seconds || 0;
-          const bTime = b.createdAt?.seconds || 0;
-          return bTime - aTime;
-        });
 
         callback(groups);
       },
@@ -268,9 +237,6 @@ class GroupService {
     return unsubscribe;
   }
 
-  /**
-   * Guruh statistikasi
-   */
   async getStats(centerId: string): Promise<GroupStats> {
     try {
       const q = query(
@@ -306,9 +272,6 @@ class GroupService {
     }
   }
 
-  /**
-   * Guruhga talaba qo'shish (student count oshirish)
-   */
   async incrementStudentCount(groupId: string, centerId: string): Promise<void> {
     try {
       const groupRef = doc(db, this.collectionName, groupId);
@@ -338,9 +301,6 @@ class GroupService {
     }
   }
 
-  /**
-   * Guruhdan talaba o'chirish (student count kamaytirish)
-   */
   async decrementStudentCount(groupId: string, centerId: string): Promise<void> {
     try {
       const groupRef = doc(db, this.collectionName, groupId);
@@ -366,9 +326,6 @@ class GroupService {
     }
   }
 
-  /**
-   * O'qituvchining guruhlarini olish
-   */
   async getByTeacherId(teacherId: string, centerId: string): Promise<Group[]> {
     try {
       const q = query(

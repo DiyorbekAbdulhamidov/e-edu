@@ -150,9 +150,10 @@ class StudentService {
 
       if (filters?.status) {
         constraints.push(where('status', '==', filters.status));
+        constraints.push(orderBy('createdAt', 'desc'));
+      } else {
+        constraints.push(orderBy('createdAt', 'desc'));
       }
-
-      constraints.push(orderBy('createdAt', 'desc'));
 
       if (pagination?.limit) {
         constraints.push(limit(pagination.limit));
@@ -182,7 +183,7 @@ class StudentService {
 
       return {
         students,
-        hasMore: students.length === (pagination?.limit || 50)
+        hasMore: students.length === (pagination?.limit || 100)
       };
     } catch (error) {
       console.error('List students error:', error);
@@ -201,9 +202,11 @@ class StudentService {
 
     if (filters?.status) {
       constraints.push(where('status', '==', filters.status));
+      constraints.push(orderBy('createdAt', 'desc'));
+    } else {
+      constraints.push(orderBy('createdAt', 'desc'));
     }
 
-    constraints.push(orderBy('createdAt', 'desc'));
     constraints.push(limit(filters?.limit || 100));
 
     const q = query(collection(db, this.collectionName), ...constraints);
