@@ -60,6 +60,7 @@ export default function LoginPage() {
     });
   };
 
+  // login/page.tsx - TUZATILGAN
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -70,15 +71,48 @@ export default function LoginPage() {
       const loggedInUser = await authService.login(formData);
       console.log('Login successful:', loggedInUser);
 
-      // User state yangilanadi, useEffect avtomatik redirect qiladi
-      // Bu yerda manual redirect QILMAYMIZ
+      // ✅ DARHOL REDIRECT (useEffect kutilmaydi)
+      const redirect = searchParams.get('redirect');
 
+      if (redirect) {
+        router.replace(redirect);
+      } else {
+        switch (loggedInUser.role) {
+          case 'superadmin':
+            router.replace('/superadmin');
+            break;
+          case 'centeradmin':
+            router.replace('/admin');
+            break;
+          case 'teacher':
+            router.replace('/teacher');
+            break;
+          case 'student':
+            router.replace('/student');
+            break;
+          case 'parent':
+            router.replace('/parent');
+            break;
+          default:
+            router.replace('/admin');
+        }
+      }
     } catch (err: any) {
       console.error('Login error:', err);
       setError(err.message);
-      setLoading(false);
+      setLoading(false); // ⚠️ Faqat error bo'lsa loading = false
     }
+    // ⚠️ SUCCESS bo'lsa loading = true qoladi (redirect bo'lguncha)
   };
+
+  // useEffect O'CHIRILSIN yoki faqat logout uchun qoldirilsin
+  useEffect(() => {
+    // Faqat logout qilganda login'ga qaytarish
+    if (user && user.centerId !== 'pending') {
+      // Already logged in, redirect to dashboard
+      router.replace('/admin'); // yoki role-based
+    }
+  }, [user, router]);
 
   return (
     <Card className="p-8">

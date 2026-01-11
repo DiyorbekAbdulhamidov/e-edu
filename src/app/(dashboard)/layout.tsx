@@ -1,6 +1,7 @@
 import { AuthProvider } from '@/contexts/AuthContext';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 export default function Layout({
   children,
@@ -10,10 +11,12 @@ export default function Layout({
   return (
     <AuthProvider>
       <ProtectedRoute>
-        <DashboardLayout>
-          {children}
-        </DashboardLayout>
+        <ErrorBoundary>
+          <DashboardLayout>
+            {children}
+          </DashboardLayout>
+        </ErrorBoundary>
       </ProtectedRoute>
-    </AuthProvider>
+    </AuthProvider >
   );
 }

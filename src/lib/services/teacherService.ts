@@ -132,6 +132,7 @@ class TeacherService {
   /**
    * Barcha o'qituvchilar
    */
+  // teacherService.ts - TUZATILGAN
   async list(centerId: string): Promise<TeacherWithUser[]> {
     try {
       const q = query(
@@ -140,21 +141,44 @@ class TeacherService {
       );
 
       const querySnapshot = await getDocs(q);
+      const teacherIds: string[] = [];
+      const teachersMap = new Map<string, Teacher>();
+
+      querySnapshot.forEach((doc) => {
+        teacherIds.push(doc.id);
+        teachersMap.set(doc.id, { id: doc.id, ...doc.data() } as Teacher);
+      });
+
+      // ✅ BATCH READ: 1 query orqali barcha userlarni olish
+      // Firestore limit: 10 doc per `in` query
       const teachers: TeacherWithUser[] = [];
 
-      for (const docSnapshot of querySnapshot.docs) {
-        const teacher = { id: docSnapshot.id, ...docSnapshot.data() } as Teacher;
+      for (let i = 0; i < teacherIds.length; i += 10) {
+        const batch = teacherIds.slice(i, i + 10);
 
-        // User ma'lumotlarini olish
-        const userDoc = await getDoc(doc(db, 'users', docSnapshot.id));
-        const userData = userDoc.exists() ? userDoc.data() : null;
+        const usersQuery = query(
+          collection(db, 'users'),
+          where('__name__', 'in', batch)
+        );
 
-        teachers.push({
-          ...teacher,
-          displayName: userData?.displayName || 'Noma\'lum',
-          email: userData?.email || '',
-          phone: userData?.phone || '',
-          avatar: userData?.avatar || '',
+        const usersSnapshot = await getDocs(usersQuery);
+        const usersMap = new Map();
+
+        usersSnapshot.forEach((doc) => {
+          usersMap.set(doc.id, doc.data());
+        });
+
+        batch.forEach((teacherId) => {
+          const teacher = teachersMap.get(teacherId)!;
+          const userData = usersMap.get(teacherId);
+
+          teachers.push({
+            ...teacher,
+            displayName: userData?.displayName || 'Noma\'lum',
+            email: userData?.email || '',
+            phone: userData?.phone || '',
+            avatar: userData?.avatar || '',
+          });
         });
       }
 

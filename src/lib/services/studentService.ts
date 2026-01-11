@@ -155,18 +155,24 @@ class StudentService {
   /**
    * Talabalar ro'yxatini olish (pagination bilan)
    */
-  // list() metodini to'liq o'zgartirish:
-
+  // studentService.ts - TUZATILGAN VERSIYA
   async list(
     centerId: string,
     filters?: FilterParams,
     pagination?: PaginationParams
   ): Promise<{ students: Student[]; hasMore: boolean }> {
     try {
-      // Faqat centerId bo'yicha filter, orderBy'siz
       const constraints: QueryConstraint[] = [
         where('centerId', '==', centerId)
       ];
+
+      // ✅ SERVER-SIDE FILTERING
+      if (filters?.status) {
+        constraints.push(where('status', '==', filters.status));
+      }
+
+      // ✅ PAGINATION
+      constraints.push(orderBy('createdAt', 'desc'));
 
       if (pagination?.limit) {
         constraints.push(limit(pagination.limit));
@@ -179,19 +185,17 @@ class StudentService {
       const q = query(collection(db, this.collectionName), ...constraints);
       const querySnapshot = await getDocs(q);
 
-      let students: Student[] = [];
+      const students: Student[] = [];
       querySnapshot.forEach((doc) => {
         students.push({ id: doc.id, ...doc.data() } as Student);
       });
 
-      // Client-side filtering va sorting
-      if (filters?.status) {
-        students = students.filter(s => s.status === filters.status);
-      }
-
+      // ⚠️ SEARCH faqat client-side (Firestore full-text qo'llab-quvvatlamaydi)
+      // VARIANT: Algolia/Meilisearch integration tavsiya etiladi
+      let filteredStudents = students;
       if (filters?.search) {
         const searchLower = filters.search.toLowerCase();
-        students = students.filter(
+        filteredStudents = students.filter(
           (student) =>
             student.firstName.toLowerCase().includes(searchLower) ||
             student.lastName.toLowerCase().includes(searchLower) ||
@@ -199,18 +203,10 @@ class StudentService {
         );
       }
 
-      // Client-side sorting by createdAt
-      students.sort((a, b) => {
-        const aTime = a.createdAt?.seconds || 0;
-        const bTime = b.createdAt?.seconds || 0;
-        return bTime - aTime;
-      });
-
-      const hasMore = pagination?.limit
-        ? students.length === pagination.limit
-        : false;
-
-      return { students, hasMore };
+      return {
+        students: filteredStudents,
+        hasMore: students.length === (pagination?.limit || 50)
+      };
     } catch (error) {
       console.error('List students error:', error);
       throw new Error('Talabalar ro\'yxatini olishda xatolik');
@@ -220,18 +216,24 @@ class StudentService {
   /**
    * Real-time listener
    */
+  // studentService.ts - TUZATILGAN
   subscribe(
     centerId: string,
     callback: (students: Student[]) => void,
     filters?: FilterParams
   ): () => void {
-    // Faqat centerId filter, orderBy yo'q
     const constraints: QueryConstraint[] = [
       where('centerId', '==', centerId)
     ];
 
-    // Status filter qo'shish (agar kerak bo'lsa)
-    // Lekin bu ham index talab qilishi mumkin, shuning uchun client-side qilamiz
+    // ✅ SERVER-SIDE FILTER
+    if (filters?.status) {
+      constraints.push(where('status', '==', filters.status));
+    }
+
+    // ✅ LIMIT (pagination bilan)
+    constraints.push(orderBy('createdAt', 'desc'));
+    constraints.push(limit(filters?.limit || 50)); // Default 50
 
     const q = query(collection(db, this.collectionName), ...constraints);
 
@@ -243,11 +245,7 @@ class StudentService {
           students.push({ id: doc.id, ...doc.data() } as Student);
         });
 
-        // Client-side filtering
-        if (filters?.status) {
-          students = students.filter(s => s.status === filters.status);
-        }
-
+        // Search faqat client-side (unavoidable)
         if (filters?.search) {
           const searchLower = filters.search.toLowerCase();
           students = students.filter(
@@ -258,13 +256,6 @@ class StudentService {
           );
         }
 
-        // Client-side sorting
-        students.sort((a, b) => {
-          const aTime = a.createdAt?.seconds || 0;
-          const bTime = b.createdAt?.seconds || 0;
-          return bTime - aTime;
-        });
-
         callback(students);
       },
       (error) => {
@@ -274,7 +265,6 @@ class StudentService {
 
     return unsubscribe;
   }
-
   /**
    * Talaba statistikasi
    */
