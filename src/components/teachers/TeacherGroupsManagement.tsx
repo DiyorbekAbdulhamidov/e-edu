@@ -51,15 +51,17 @@ export default function TeacherGroupsManagement({
       const updatedGroups = [...teacher.groups, selectedGroupId];
       await teacherService.update(
         teacher.id,
-        { groups: updatedGroups } as any,
+        { groups: updatedGroups },
         centerId
       );
 
       setSelectedGroupId('');
       onUpdate();
       alert('Guruh biriktirildi!');
-    } catch (error: any) {
-      alert('Xatolik: ' + error.message);
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Xatolik yuz berdi';
+      alert('Xatolik: ' + message);
     } finally {
       setLoading(false);
     }
@@ -74,14 +76,16 @@ export default function TeacherGroupsManagement({
 
       await teacherService.update(
         teacher.id,
-        { groups: updatedGroups } as any,
+        { groups: updatedGroups },
         centerId
       );
 
       onUpdate();
       alert('Guruh olib tashlandi!');
-    } catch (error: any) {
-      alert('Xatolik: ' + error.message);
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Xatolik yuz berdi';
+      alert('Xatolik: ' + message);
     } finally {
       setLoading(false);
     }

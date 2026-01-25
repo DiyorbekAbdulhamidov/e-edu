@@ -13,17 +13,24 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
+const isConfigured = Object.values(firebaseConfig).every(Boolean);
+
 // Firebase'ni faqat bir marta initialize qilish
-let app: FirebaseApp;
-if (!getApps().length) {
-  app = initializeApp(firebaseConfig);
+let app: FirebaseApp | null = null;
+if (isConfigured) {
+  if (!getApps().length) {
+    app = initializeApp(firebaseConfig);
+  } else {
+    app = getApp();
+  }
 } else {
-  app = getApp();
+  console.warn('Firebase config missing. Skipping initialization.');
 }
 
 // Firebase xizmatlarini export qilish
-export const auth: Auth = getAuth(app);
-export const db: Firestore = getFirestore(app);
-export const storage: FirebaseStorage = getStorage(app);
+export const auth: Auth = app ? getAuth(app) : (null as unknown as Auth);
+export const db: Firestore = app ? getFirestore(app) : (null as unknown as Firestore);
+export const storage: FirebaseStorage = app ? getStorage(app) : (null as unknown as FirebaseStorage);
 
 export default app;
+export { isConfigured as isFirebaseConfigured };

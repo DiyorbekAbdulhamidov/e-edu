@@ -34,7 +34,7 @@ export function useGroups(centerId: string, filters?: FilterParams) {
       isSubscribed = false;
       unsubscribe();
     };
-  }, [centerId, filters?.status, filters?.search]);
+  }, [centerId, filters]);
 
   return { groups, loading, error };
 }

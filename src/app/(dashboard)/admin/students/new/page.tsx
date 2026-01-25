@@ -1,5 +1,4 @@
 import StudentForm from '@/components/students/StudentForm';
-import Card from '@/components/ui/Card';
 
 export default function NewStudentPage() {
   return (

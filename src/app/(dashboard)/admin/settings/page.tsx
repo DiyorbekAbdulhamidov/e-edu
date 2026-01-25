@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { centerService } from '@/lib/services/centerService';
 import { authService } from '@/lib/services/authService';
+import { Center } from '@/lib/types';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -13,7 +14,7 @@ export default function AdminSettingsPage() {
   const { user } = useAuthContext();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [center, setCenter] = useState<any>(null);
+  const [center, setCenter] = useState<Center | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const [centerData, setCenterData] = useState({
@@ -29,13 +30,7 @@ export default function AdminSettingsPage() {
     confirmPassword: '',
   });
 
-  useEffect(() => {
-    if (user?.centerId && user.centerId !== 'pending') {
-      loadCenter();
-    }
-  }, [user]);
-
-  const loadCenter = async () => {
+  const loadCenter = useCallback(async () => {
     try {
       const data = await centerService.getById(user!.centerId!);
       setCenter(data);
@@ -46,13 +41,19 @@ export default function AdminSettingsPage() {
         email: data?.email || '',
       });
       setError(null);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Load center error:', error);
-      setError(error.message);
+      setError(error instanceof Error ? error.message : 'Xatolik yuz berdi');
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user?.centerId && user.centerId !== 'pending') {
+      loadCenter();
+    }
+  }, [loadCenter, user]);
 
   const handleCenterUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,9 +80,11 @@ export default function AdminSettingsPage() {
       await centerService.update(user!.centerId!, centerData);
       alert('Markaz ma\'lumotlari yangilandi!');
       loadCenter();
-    } catch (error: any) {
-      setError(error.message);
-      alert('Xatolik: ' + error.message);
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Xatolik yuz berdi';
+      setError(message);
+      alert('Xatolik: ' + message);
     } finally {
       setSaving(false);
     }
@@ -128,8 +131,10 @@ export default function AdminSettingsPage() {
         newPassword: '',
         confirmPassword: '',
       });
-    } catch (error: any) {
-      alert('Xatolik: ' + error.message);
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Xatolik yuz berdi';
+      alert('Xatolik: ' + message);
     } finally {
       setSaving(false);
     }

@@ -49,6 +49,13 @@ export default function StudentCard({ student }: StudentCardProps) {
           <span className="font-medium">{student.groups.length}</span>
         </div>
 
+        <div className="flex justify-between text-sm">
+          <span className="text-gray-600">Asosiy guruh:</span>
+          <span className="font-medium">
+            {student.assignedGroupName || 'Tanlanmagan'}
+          </span>
+        </div>
+
         {student.totalDebt > 0 && (
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">Qarz:</span>

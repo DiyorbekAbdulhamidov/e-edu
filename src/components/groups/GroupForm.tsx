@@ -136,8 +136,8 @@ export default function GroupForm({ group, onSuccess }: GroupFormProps) {
       } else {
         router.push('/admin/groups');
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Xatolik yuz berdi');
     } finally {
       setLoading(false);
     }

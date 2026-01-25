@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useEffect, useState } from 'react';
+import { use, useCallback, useEffect, useState } from 'react';
 import { centerService } from '@/lib/services/centerService';
 import { Center } from '@/lib/types';
 import Card from '@/components/ui/Card';
@@ -15,14 +15,12 @@ export default function CenterDetailPage({
 }) {
   const resolvedParams = use(params);
   const [center, setCenter] = useState<Center | null>(null);
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<Awaited<
+    ReturnType<typeof centerService.getStats>
+  > | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadCenter();
-  }, []);
-
-  const loadCenter = async () => {
+  const loadCenter = useCallback(async () => {
     try {
       const centerData = await centerService.getById(resolvedParams.id);
       const statsData = await centerService.getStats(resolvedParams.id);
@@ -33,18 +31,24 @@ export default function CenterDetailPage({
     } finally {
       setLoading(false);
     }
-  };
+  }, [resolvedParams.id]);
+
+  useEffect(() => {
+    loadCenter();
+  }, [loadCenter]);
 
   const handleStatusToggle = async () => {
     if (!center || !confirm('Statusni o\'zgartirmoqchimisiz?')) return;
 
     try {
-      const newStatus = center.status === 'active' ? 'suspended' : 'active';
+      const newStatus = center.status === 'active' ? 'inactive' : 'active';
       await centerService.updateStatus(center.id, newStatus);
       alert('Status o\'zgartirildi!');
       loadCenter();
-    } catch (error: any) {
-      alert('Xatolik: ' + error.message);
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Xatolik yuz berdi';
+      alert('Xatolik: ' + message);
     }
   };
 

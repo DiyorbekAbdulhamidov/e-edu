@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { reportService } from '@/lib/services/reportService';
 import Card from '@/components/ui/Card';
@@ -9,16 +9,13 @@ import Spinner from '@/components/ui/Spinner';
 
 export default function TeachersReportPage() {
   const { user } = useAuthContext();
-  const [report, setReport] = useState<any[]>([]);
+  type TeacherPerformanceRow = Awaited<
+    ReturnType<typeof reportService.getTeacherPerformance>
+  >[number];
+  const [report, setReport] = useState<TeacherPerformanceRow[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (user?.centerId) {
-      loadReport();
-    }
-  }, [user]);
-
-  const loadReport = async () => {
+  const loadReport = useCallback(async () => {
     try {
       setLoading(true);
       const data = await reportService.getTeacherPerformance(user!.centerId!);
@@ -28,7 +25,13 @@ export default function TeachersReportPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user?.centerId) {
+      loadReport();
+    }
+  }, [loadReport, user]);
 
   const handleExport = () => {
     reportService.exportToCSV(report, 'teachers_performance');
@@ -49,9 +52,9 @@ export default function TeachersReportPage() {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
-            O'qituvchilar hisoboti
+            O&apos;qituvchilar hisoboti
           </h1>
-          <p className="text-gray-600 mt-1">O'qituvchilar samaradorligi</p>
+          <p className="text-gray-600 mt-1">O&apos;qituvchilar samaradorligi</p>
         </div>
 
         <Button onClick={handleExport}>Export CSV</Button>
@@ -61,7 +64,7 @@ export default function TeachersReportPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <Card className="bg-gradient-to-br from-primary-500 to-primary-600 text-white">
           <div className="text-3xl font-bold mb-2">{report.length}</div>
-          <div className="text-primary-100">Jami o'qituvchilar</div>
+          <div className="text-primary-100">Jami o&apos;qituvchilar</div>
         </Card>
 
         <Card className="bg-gradient-to-br from-success-500 to-success-600 text-white">
@@ -76,10 +79,10 @@ export default function TeachersReportPage() {
           <table className="table">
             <thead className="table-header">
               <tr>
-                <th className="table-header-cell">O'qituvchi</th>
+                <th className="table-header-cell">O&apos;qituvchi</th>
                 <th className="table-header-cell">Guruhlar</th>
                 <th className="table-header-cell">Talabalar</th>
-                <th className="table-header-cell">O'rtacha davomat</th>
+                <th className="table-header-cell">O&apos;rtacha davomat</th>
               </tr>
             </thead>
             <tbody>

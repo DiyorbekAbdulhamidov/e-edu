@@ -23,8 +23,8 @@ export default function PaymentsPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">To'lovlar</h1>
-        <p className="text-gray-600 mt-1">Barcha to'lovlar tarixi</p>
+        <h1 className="text-2xl font-bold text-gray-900">To&apos;lovlar</h1>
+        <p className="text-gray-600 mt-1">Barcha to&apos;lovlar tarixi</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
@@ -32,12 +32,12 @@ export default function PaymentsPage() {
           <div className="text-3xl font-bold mb-2">
             {totalIncome.toLocaleString()}
           </div>
-          <div className="text-success-100">Jami daromad (so'm)</div>
+          <div className="text-success-100">Jami daromad (so&apos;m)</div>
         </Card>
 
         <Card className="bg-gradient-to-br from-primary-500 to-primary-600 text-white">
           <div className="text-3xl font-bold mb-2">{payments.length}</div>
-          <div className="text-primary-100">Jami to'lovlar</div>
+          <div className="text-primary-100">Jami to&apos;lovlar</div>
         </Card>
 
         <Card className="bg-gradient-to-br from-warning-500 to-warning-600 text-white">
@@ -46,12 +46,12 @@ export default function PaymentsPage() {
               ? Math.round(totalIncome / payments.length).toLocaleString()
               : 0}
           </div>
-          <div className="text-warning-100">O'rtacha to'lov</div>
+          <div className="text-warning-100">O&apos;rtacha to&apos;lov</div>
         </Card>
       </div>
 
       <Card>
-        <h2 className="text-lg font-semibold mb-4">So'nggi to'lovlar</h2>
+        <h2 className="text-lg font-semibold mb-4">So&apos;nggi to&apos;lovlar</h2>
         <div className="overflow-x-auto">
           <table className="table">
             <thead className="table-header">
@@ -75,16 +75,16 @@ export default function PaymentsPage() {
                     {payment.receiptNumber}
                   </td>
                   <td className="table-cell font-semibold text-success-600">
-                    {payment.amount.toLocaleString()} so'm
+                    {payment.amount.toLocaleString()} so&apos;m
                   </td>
                   <td className="table-cell capitalize">
                     {payment.paymentMethod === 'cash' && 'Naqd'}
                     {payment.paymentMethod === 'card' && 'Karta'}
-                    {payment.paymentMethod === 'transfer' && 'O\'tkazma'}
+                    {payment.paymentMethod === 'transfer' && "O'tkazma"}
                   </td>
                   <td className="table-cell">
                     {payment.paymentType === 'full' && (
-                      <Badge variant="success">To'liq</Badge>
+                      <Badge variant="success">To&apos;liq</Badge>
                     )}
                     {payment.paymentType === 'partial' && (
                       <Badge variant="warning">Qisman</Badge>

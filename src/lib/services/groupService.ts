@@ -76,7 +76,7 @@ class GroupService {
         throw new Error('Ruxsat yo\'q');
       }
 
-      const updateData: any = {
+      const updateData: Record<string, unknown> = {
         ...data,
         updatedAt: serverTimestamp(),
       };

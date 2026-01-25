@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useGroups } from '@/lib/hooks/useGroups';
 import { useAuthContext } from '@/contexts/AuthContext';
 import GroupCard from './GroupCard';
-import Input from '@/components/ui/Input';
 import Spinner from '@/components/ui/Spinner';
 import { MagnifyingGlassIcon } from '@/components/ui/Icons';
 
