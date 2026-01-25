@@ -292,7 +292,12 @@ class StudentService {
     }
   }
 
-  async addToGroup(studentId: string, groupId: string, centerId: string): Promise<void> {
+  async addToGroup(
+    studentId: string,
+    groupId: string,
+    centerId: string,
+    groupName?: string
+  ): Promise<void> {
     try {
       const studentRef = doc(db, this.collectionName, studentId);
       const studentDoc = await getDoc(studentRef);
@@ -313,6 +318,8 @@ class StudentService {
 
       await updateDoc(studentRef, {
         groups: [...student.groups, groupId],
+        assignedGroupId: groupId,
+        assignedGroupName: groupName ?? null,
         updatedAt: serverTimestamp(),
       });
     } catch (error) {
@@ -340,8 +347,11 @@ class StudentService {
         throw new Error('Ruxsat yo\'q');
       }
 
+      const remainingGroups = student.groups.filter((gId) => gId !== groupId);
       await updateDoc(studentRef, {
-        groups: student.groups.filter((gId) => gId !== groupId),
+        groups: remainingGroups,
+        assignedGroupId: remainingGroups[0] ?? null,
+        assignedGroupName: null,
         updatedAt: serverTimestamp(),
       });
     } catch (error) {

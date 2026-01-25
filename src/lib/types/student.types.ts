@@ -11,6 +11,8 @@ export interface Student extends TenantEntity {
   status: StudentStatus;
   enrollmentDate: Timestamp;
   groups: string[];
+  assignedGroupId?: string | null;
+  assignedGroupName?: string | null;
   totalDebt: number;
   photo: string;
   notes: string;
@@ -26,6 +28,9 @@ export interface CreateStudentData {
   dateOfBirth: Date;
   address: string;
   enrollmentDate: Date;
+  assignedGroupId?: string;
+  assignedGroupName?: string;
+  groups?: string[];
   photo?: string;
   notes?: string;
   parentId?: string;

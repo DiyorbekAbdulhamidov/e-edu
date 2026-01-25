@@ -32,13 +32,26 @@ export default function StudentDetailPage({
   const availableGroups = groups.filter(g =>
     !student?.groups.includes(g.id) && g.status === 'active'
   );
+  const assignedGroupName =
+    student?.assignedGroupName ||
+    groups.find((group) => group.id === student?.assignedGroupId)?.name ||
+    groups.find((group) => group.id === student?.groups[0])?.name ||
+    null;
 
   const handleAddToGroup = async () => {
     if (!selectedGroupId || !student || !user?.centerId) return;
 
     setActionLoading(true);
     try {
-      await studentService.addToGroup(student.id, selectedGroupId, user.centerId);
+      const selectedGroup = availableGroups.find(
+        (group) => group.id === selectedGroupId
+      );
+      await studentService.addToGroup(
+        student.id,
+        selectedGroupId,
+        user.centerId,
+        selectedGroup?.name
+      );
       await groupService.incrementStudentCount(selectedGroupId, user.centerId);
 
       alert('Talaba guruhga qo\'shildi!');
@@ -148,6 +161,13 @@ export default function StudentDetailPage({
             <div>
               <p className="text-sm text-gray-600">Manzil</p>
               <p className="font-medium">{student.address}</p>
+            </div>
+
+            <div>
+              <p className="text-sm text-gray-600">Guruh</p>
+              <p className="font-medium">
+                {assignedGroupName || 'Guruh tanlanmagan'}
+              </p>
             </div>
 
             <div>
