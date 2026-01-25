@@ -38,6 +38,7 @@ export interface UpdateStudentData {
   parentPhone?: string;
   dateOfBirth?: Date;
   address?: string;
+  enrollmentDate?: Date;
   status?: StudentStatus;
   photo?: string;
   notes?: string;

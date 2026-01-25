@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useStudents } from '@/lib/hooks/useStudents';
 import { useAuthContext } from '@/contexts/AuthContext';
 import StudentCard from './StudentCard';
-import Input from '@/components/ui/Input';
 import Spinner from '@/components/ui/Spinner';
 import { MagnifyingGlassIcon } from '@/components/ui/Icons';
 

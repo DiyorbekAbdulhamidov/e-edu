@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { useTeachers } from '@/lib/hooks/useTeachers';
 import { teacherSalaryService } from '@/lib/services/teacherSalaryService';
@@ -18,15 +18,7 @@ export default function TeacherSalaryPage() {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const selectedTeacher = teachers.find(t => t.id === selectedTeacherId);
-
-  useEffect(() => {
-    if (selectedTeacherId && user?.centerId) {
-      loadSalaryHistory();
-    }
-  }, [selectedTeacherId, user]);
-
-  const loadSalaryHistory = async () => {
+  const loadSalaryHistory = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -35,13 +27,19 @@ export default function TeacherSalaryPage() {
         user!.centerId!
       );
       setSalaryHistory(data);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Load salary history error:', error);
-      setError(error.message);
+      setError(error instanceof Error ? error.message : 'Xatolik yuz berdi');
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedTeacherId, user]);
+
+  useEffect(() => {
+    if (selectedTeacherId && user?.centerId) {
+      loadSalaryHistory();
+    }
+  }, [loadSalaryHistory, selectedTeacherId, user]);
 
   const handleGenerateMonthlySalaries = async () => {
     if (!confirm('Joriy oy uchun barcha o\'qituvchilar maoshini yaratmoqchimisiz?')) {
@@ -66,9 +64,11 @@ export default function TeacherSalaryPage() {
       if (selectedTeacherId) {
         loadSalaryHistory();
       }
-    } catch (error: any) {
-      setError(error.message);
-      alert('Xatolik: ' + error.message);
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Xatolik yuz berdi';
+      setError(message);
+      alert('Xatolik: ' + message);
     } finally {
       setGenerating(false);
     }
@@ -80,13 +80,14 @@ export default function TeacherSalaryPage() {
     try {
       await teacherSalaryService.markAsPaid(
         salaryId,
-        user!.uid,
-        user!.centerId!
+        user!.uid
       );
       loadSalaryHistory();
       alert('Maosh to\'langan deb belgilandi!');
-    } catch (error: any) {
-      alert('Xatolik: ' + error.message);
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Xatolik yuz berdi';
+      alert('Xatolik: ' + message);
     }
   };
 

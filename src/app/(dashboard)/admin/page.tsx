@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { studentService } from '@/lib/services/studentService';
 import Card from '@/components/ui/Card';
@@ -19,28 +19,28 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (user?.centerId && user.centerId !== 'pending') {
-      loadStats();
-    } else if (user?.centerId === 'pending') {
-      setLoading(false);
-    }
-  }, [user]);
-
-  const loadStats = async () => {
+  const loadStats = useCallback(async () => {
     try {
       if (user?.centerId && user.centerId !== 'pending') {
         const data = await studentService.getStats(user.centerId);
         setStats(data);
         setError(null);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Stats error:', error);
-      setError(error.message);
+      setError(error instanceof Error ? error.message : 'Xatolik yuz berdi');
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user?.centerId && user.centerId !== 'pending') {
+      loadStats();
+    } else if (user?.centerId === 'pending') {
+      setLoading(false);
+    }
+  }, [loadStats, user]);
 
   if (user?.centerId === 'pending') {
     return (
@@ -117,7 +117,7 @@ export default function AdminDashboard() {
           <div className="text-4xl font-bold mb-2">
             {stats.totalDebt.toLocaleString()}
           </div>
-          <div className="text-danger-100">Jami qarz (so'm)</div>
+          <div className="text-danger-100">Jami qarz (so&apos;m)</div>
         </Card>
       </div>
 
@@ -145,7 +145,7 @@ export default function AdminDashboard() {
             className="p-4 bg-warning-50 hover:bg-warning-100 rounded-lg transition-colors"
           >
             <div className="text-2xl mb-2">💰</div>
-            <div className="font-medium">To'lovlar</div>
+            <div className="font-medium">To&apos;lovlar</div>
           </Link>
         </div>
       </Card>

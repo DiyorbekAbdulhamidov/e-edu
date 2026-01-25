@@ -39,6 +39,31 @@ interface TeacherPerformance {
   averageAttendance: number;
 }
 
+export const calculateAttendanceRate = (
+  presentCount: number,
+  totalCount: number
+) => (totalCount > 0 ? (presentCount / totalCount) * 100 : 0);
+
+export const buildCsvContent = (data: Array<Record<string, unknown>>) => {
+  if (data.length === 0) return '';
+
+  const headers = Object.keys(data[0]);
+  const csvRows = [];
+
+  csvRows.push(headers.join(','));
+
+  for (const row of data) {
+    const values = headers.map((header) => {
+      const val = row[header];
+      const escaped = ('' + val).replace(/"/g, '\\"');
+      return `"${escaped}"`;
+    });
+    csvRows.push(values.join(','));
+  }
+
+  return csvRows.join('\n');
+};
+
 class ReportService {
   async getIncomeReport(
     centerId: string,
@@ -200,8 +225,10 @@ class ReportService {
           });
         }
 
-        const averageAttendance =
-          attendanceCount > 0 ? (totalAttendance / attendanceCount) * 100 : 0;
+        const averageAttendance = calculateAttendanceRate(
+          totalAttendance,
+          attendanceCount
+        );
 
         performance.push({
           teacherId,
@@ -219,24 +246,14 @@ class ReportService {
     }
   }
 
-  exportToCSV(data: any[], filename: string): void {
-    if (data.length === 0) return;
+  exportToCSV<T extends object>(data: T[], filename: string): void {
+    const csvContent = buildCsvContent(
+      data as Array<Record<string, unknown>>
+    );
 
-    const headers = Object.keys(data[0]);
-    const csvRows = [];
-
-    csvRows.push(headers.join(','));
-
-    for (const row of data) {
-      const values = headers.map((header) => {
-        const val = row[header];
-        const escaped = ('' + val).replace(/"/g, '\\"');
-        return `"${escaped}"`;
-      });
-      csvRows.push(values.join(','));
+    if (!csvContent) {
+      return;
     }
-
-    const csvContent = csvRows.join('\n');
     const BOM = '\uFEFF';
     const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');

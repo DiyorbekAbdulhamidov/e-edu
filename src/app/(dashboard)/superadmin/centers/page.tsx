@@ -20,12 +20,14 @@ export default function CentersListPage() {
 
     setActionLoading(centerId);
     try {
-      const newStatus = currentStatus === 'active' ? 'suspended' : 'active';
+      const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
       await centerService.updateStatus(centerId, newStatus);
       refresh();
       alert('Status o\'zgartirildi!');
-    } catch (error: any) {
-      alert('Xatolik: ' + error.message);
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Xatolik yuz berdi';
+      alert('Xatolik: ' + message);
     } finally {
       setActionLoading(null);
     }
@@ -94,7 +96,7 @@ export default function CentersListPage() {
 
         <Card className="bg-gradient-to-br from-danger-500 to-danger-600 text-white">
           <div className="text-3xl font-bold mb-2">
-            {centers.filter((c) => c.status === 'suspended').length}
+            {centers.filter((c) => c.status === 'inactive').length}
           </div>
           <div className="text-danger-100">Bloklangan</div>
         </Card>

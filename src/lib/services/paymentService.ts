@@ -2,15 +2,12 @@ import {
   collection,
   doc,
   getDocs,
-  addDoc,
   query,
   where,
-  orderBy,
   Timestamp,
   serverTimestamp,
   writeBatch,
   onSnapshot,
-  QueryConstraint,
   increment,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
@@ -85,7 +82,7 @@ class PaymentService {
       );
 
       const querySnapshot = await getDocs(q);
-      let payments: Payment[] = [];
+      const payments: Payment[] = [];
       let totalPaid = 0;
 
       querySnapshot.forEach((doc) => {
@@ -133,7 +130,7 @@ class PaymentService {
       );
 
       const querySnapshot = await getDocs(q);
-      let payments: Payment[] = [];
+      const payments: Payment[] = [];
 
       querySnapshot.forEach((doc) => {
         payments.push({ id: doc.id, ...doc.data() } as Payment);
@@ -328,7 +325,7 @@ class PaymentService {
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        let payments: Payment[] = [];
+        const payments: Payment[] = [];
         snapshot.forEach((doc) => {
           payments.push({ id: doc.id, ...doc.data() } as Payment);
         });

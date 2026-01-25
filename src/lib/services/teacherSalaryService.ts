@@ -7,9 +7,7 @@ import {
   updateDoc,
   query,
   where,
-  orderBy,
   serverTimestamp,
-  Timestamp,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { teacherService } from './teacherService';
@@ -27,8 +25,7 @@ class TeacherSalaryService {
    */
   async createSalaryHistory(
     data: CreateSalaryHistoryData,
-    centerId: string,
-    userId: string
+    centerId: string
   ): Promise<string> {
     try {
       const salaryData = {
@@ -63,8 +60,7 @@ class TeacherSalaryService {
    */
   async markAsPaid(
     salaryId: string,
-    userId: string,
-    centerId: string
+    userId: string
   ): Promise<void> {
     try {
       const salaryRef = doc(db, this.collectionName, salaryId);
@@ -95,7 +91,7 @@ class TeacherSalaryService {
       );
 
       const querySnapshot = await getDocs(q);
-      let salaries: TeacherSalaryHistory[] = [];
+      const salaries: TeacherSalaryHistory[] = [];
 
       querySnapshot.forEach((doc) => {
         salaries.push({ id: doc.id, ...doc.data() } as TeacherSalaryHistory);

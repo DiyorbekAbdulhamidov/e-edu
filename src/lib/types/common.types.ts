@@ -45,7 +45,7 @@ export interface TimeSlot {
 
 export interface PaginationParams {
   limit: number;
-  lastDoc?: any;
+  lastDoc?: unknown;
 }
 
 export interface FilterParams {
@@ -53,5 +53,6 @@ export interface FilterParams {
   status?: string;
   startDate?: Date;
   endDate?: Date;
-  [key: string]: any;
+  limit?: number;
+  [key: string]: unknown;
 }

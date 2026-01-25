@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useTeacher } from '@/lib/hooks/useTeacher';
 import { groupService } from '@/lib/services/groupService';
@@ -18,13 +18,7 @@ export default function TeacherDashboard() {
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (user?.uid && user?.centerId) {
-      loadGroups();
-    }
-  }, [user]);
-
-  const loadGroups = async () => {
+  const loadGroups = useCallback(async () => {
     try {
       const data = await groupService.getByTeacherId(
         user!.uid,
@@ -36,7 +30,13 @@ export default function TeacherDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user?.uid && user?.centerId) {
+      loadGroups();
+    }
+  }, [loadGroups, user]);
 
   if (teacherLoading || loading) {
     return (
