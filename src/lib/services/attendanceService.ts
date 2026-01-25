@@ -1,18 +1,14 @@
 import {
   collection,
   doc,
-  getDoc,
   getDocs,
   addDoc,
   updateDoc,
-  deleteDoc,
   query,
   where,
-  orderBy,
   Timestamp,
   serverTimestamp,
   onSnapshot,
-  QueryConstraint,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import {

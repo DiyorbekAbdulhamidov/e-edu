@@ -21,7 +21,7 @@ export default function GroupCard({ group }: GroupCardProps) {
   };
 
   const activeDays = Object.entries(group.schedule).filter(
-    ([_, value]) => value !== null
+    ([, value]) => value !== null
   );
 
   return (

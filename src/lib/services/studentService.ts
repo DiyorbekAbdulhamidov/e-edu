@@ -26,30 +26,53 @@ import {
   FilterParams,
 } from '@/lib/types';
 
+export const buildStudentCreatePayload = (
+  data: CreateStudentData,
+  centerId: string,
+  userId: string
+) => ({
+  centerId,
+  firstName: data.firstName,
+  lastName: data.lastName,
+  phone: data.phone,
+  parentPhone: data.parentPhone,
+  dateOfBirth: Timestamp.fromDate(data.dateOfBirth),
+  address: data.address,
+  status: 'active' as const,
+  enrollmentDate: Timestamp.fromDate(data.enrollmentDate),
+  groups: [],
+  totalDebt: 0,
+  photo: data.photo || '',
+  notes: data.notes || '',
+  parentId: data.parentId || null,
+  createdBy: userId,
+  createdAt: serverTimestamp(),
+  updatedAt: serverTimestamp(),
+});
+
+export const buildStudentUpdatePayload = (data: UpdateStudentData) => {
+  const updateData: Record<string, unknown> = {
+    ...data,
+    updatedAt: serverTimestamp(),
+  };
+
+  if (data.dateOfBirth) {
+    updateData.dateOfBirth = Timestamp.fromDate(data.dateOfBirth);
+  }
+
+  if (data.enrollmentDate) {
+    updateData.enrollmentDate = Timestamp.fromDate(data.enrollmentDate);
+  }
+
+  return updateData;
+};
+
 class StudentService {
   private collectionName = 'students';
 
   async create(data: CreateStudentData, centerId: string, userId: string): Promise<string> {
     try {
-      const studentData = {
-        centerId,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        phone: data.phone,
-        parentPhone: data.parentPhone,
-        dateOfBirth: Timestamp.fromDate(data.dateOfBirth),
-        address: data.address,
-        status: 'active' as const,
-        enrollmentDate: Timestamp.fromDate(data.enrollmentDate),
-        groups: [],
-        totalDebt: 0,
-        photo: data.photo || '',
-        notes: data.notes || '',
-        parentId: data.parentId || null,
-        createdBy: userId,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      };
+      const studentData = buildStudentCreatePayload(data, centerId, userId);
 
       const docRef = await addDoc(collection(db, this.collectionName), studentData);
       return docRef.id;
@@ -76,14 +99,7 @@ class StudentService {
         throw new Error('Ruxsat yo\'q');
       }
 
-      const updateData: any = {
-        ...data,
-        updatedAt: serverTimestamp(),
-      };
-
-      if (data.dateOfBirth) {
-        updateData.dateOfBirth = Timestamp.fromDate(data.dateOfBirth);
-      }
+      const updateData = buildStudentUpdatePayload(data);
 
       await updateDoc(studentRef, updateData);
     } catch (error) {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useTeacher } from '@/lib/hooks/useTeacher';
 import { teacherService } from '@/lib/services/teacherService';
@@ -16,13 +16,7 @@ export default function TeacherSalaryPage() {
   const [salary, setSalary] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (teacher && user?.centerId) {
-      calculateSalary();
-    }
-  }, [teacher, user]);
-
-  const calculateSalary = async () => {
+  const calculateSalary = useCallback(async () => {
     try {
       const currentDate = new Date();
       const year = currentDate.getFullYear();
@@ -41,7 +35,13 @@ export default function TeacherSalaryPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (teacher && user?.centerId) {
+      calculateSalary();
+    }
+  }, [calculateSalary, teacher, user]);
 
   if (teacherLoading || loading) {
     return (

@@ -195,10 +195,12 @@ class TeacherService {
   async calculateMonthlySalary(
     teacherId: string,
     centerId: string,
-    year: number,
-    month: number
+    _year: number,
+    _month: number
   ): Promise<number> {
     try {
+      void _year;
+      void _month;
       const teacher = await this.getById(teacherId, centerId);
       if (!teacher) return 0;
 

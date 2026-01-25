@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { reportService } from '@/lib/services/reportService';
 import Card from '@/components/ui/Card';
@@ -10,16 +10,13 @@ import Badge from '@/components/ui/Badge';
 
 export default function DebtsReportPage() {
   const { user } = useAuthContext();
-  const [report, setReport] = useState<any[]>([]);
+  type DebtReportRow = Awaited<
+    ReturnType<typeof reportService.getDebtReport>
+  >[number];
+  const [report, setReport] = useState<DebtReportRow[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (user?.centerId) {
-      loadReport();
-    }
-  }, [user]);
-
-  const loadReport = async () => {
+  const loadReport = useCallback(async () => {
     try {
       setLoading(true);
       const data = await reportService.getDebtReport(user!.centerId!);
@@ -29,7 +26,13 @@ export default function DebtsReportPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user?.centerId) {
+      loadReport();
+    }
+  }, [loadReport, user]);
 
   const handleExport = () => {
     reportService.exportToCSV(report, 'debts_report');
@@ -50,7 +53,7 @@ export default function DebtsReportPage() {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Qarzlar hisoboti</h1>
-          <p className="text-gray-600 mt-1">Talabalar qarzlari ro'yxati</p>
+          <p className="text-gray-600 mt-1">Talabalar qarzlari ro&apos;yxati</p>
         </div>
 
         <Button onClick={handleExport}>Export CSV</Button>
@@ -62,7 +65,7 @@ export default function DebtsReportPage() {
           <div className="text-3xl font-bold mb-2">
             {totalDebt.toLocaleString()}
           </div>
-          <div className="text-danger-100">Jami qarz (so'm)</div>
+          <div className="text-danger-100">Jami qarz (so&apos;m)</div>
         </Card>
 
         <Card className="bg-gradient-to-br from-warning-500 to-warning-600 text-white">
@@ -75,7 +78,7 @@ export default function DebtsReportPage() {
       <Card>
         {report.length === 0 ? (
           <p className="text-center text-gray-500 py-12">
-            Qarzdor talabalar yo'q! 🎉
+            Qarzdor talabalar yo&apos;q! 🎉
           </p>
         ) : (
           <div className="overflow-x-auto">
@@ -99,7 +102,7 @@ export default function DebtsReportPage() {
                       <Badge>{row.groups.length} ta guruh</Badge>
                     </td>
                     <td className="table-cell font-bold text-danger-600">
-                      {row.totalDebt.toLocaleString()} so'm
+                      {row.totalDebt.toLocaleString()} so&apos;m
                     </td>
                   </tr>
                 ))}

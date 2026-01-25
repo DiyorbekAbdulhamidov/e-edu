@@ -80,7 +80,7 @@ export default function GroupDetailPage({
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2">
-          <h2 className="text-lg font-semibold mb-4">Asosiy ma'lumotlar</h2>
+          <h2 className="text-lg font-semibold mb-4">Asosiy ma&apos;lumotlar</h2>
 
           <div className="space-y-4">
             <div>
@@ -89,9 +89,9 @@ export default function GroupDetailPage({
             </div>
 
             <div>
-              <p className="text-sm text-gray-600">Oylik to'lov</p>
+              <p className="text-sm text-gray-600">Oylik to&apos;lov</p>
               <p className="font-medium text-success-600">
-                {group.monthlyPrice.toLocaleString()} so'm
+                {group.monthlyPrice.toLocaleString()} so&apos;m
               </p>
             </div>
 

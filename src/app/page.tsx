@@ -11,7 +11,7 @@ export default function Home() {
               e-edu
             </h1>
             <p className="text-xl text-gray-700">
-              O'quv markazlari uchun professional CRM tizimi
+              O&apos;quv markazlari uchun professional CRM tizimi
             </p>
           </div>
 
@@ -21,15 +21,15 @@ export default function Home() {
               <div className="text-4xl mb-4">👨‍🎓</div>
               <h3 className="font-semibold text-lg mb-2">Talabalar</h3>
               <p className="text-gray-600">
-                To'liq talabalar bazasi va boshqaruv tizimi
+                To&apos;liq talabalar bazasi va boshqaruv tizimi
               </p>
             </div>
 
             <div className="bg-white p-6 rounded-lg shadow-medium">
               <div className="text-4xl mb-4">💰</div>
-              <h3 className="font-semibold text-lg mb-2">To'lovlar</h3>
+              <h3 className="font-semibold text-lg mb-2">To&apos;lovlar</h3>
               <p className="text-gray-600">
-                Avtomatik qarz hisoblash va to'lovlarni kuzatish
+                Avtomatik qarz hisoblash va to&apos;lovlarni kuzatish
               </p>
             </div>
 
@@ -54,7 +54,7 @@ export default function Home() {
               href="/register"
               className="px-8 py-4 bg-white text-primary-600 rounded-lg font-semibold hover:bg-gray-50 transition-colors shadow-medium border-2 border-primary-600"
             >
-              Ro'yxatdan o'tish
+              Ro&apos;yxatdan o&apos;tish
             </Link>
           </div>
 
@@ -68,8 +68,8 @@ export default function Home() {
                   <li>✅ Talabalarni boshqarish</li>
                   <li>✅ Guruhlar va kurslar</li>
                   <li>✅ Davomat tizimi</li>
-                  <li>✅ To'lovlar va qarzlar</li>
-                  <li>✅ O'qituvchilar paneli</li>
+                  <li>✅ To&apos;lovlar va qarzlar</li>
+                  <li>✅ O&apos;qituvchilar paneli</li>
                   <li>✅ Ota-onalar uchun kirish</li>
                 </ul>
               </div>

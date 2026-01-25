@@ -90,8 +90,8 @@ export default function StudentForm({ student, onSuccess }: StudentFormProps) {
       } else {
         router.push('/admin/students');
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Xatolik yuz berdi');
     } finally {
       setLoading(false);
     }

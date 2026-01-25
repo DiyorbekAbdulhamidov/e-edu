@@ -21,8 +21,8 @@ export function useGroup(groupId: string, centerId: string) {
         const data = await groupService.getById(groupId, centerId);
         setGroup(data);
         setError(null);
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Xatolik yuz berdi');
         setGroup(null);
       } finally {
         setLoading(false);

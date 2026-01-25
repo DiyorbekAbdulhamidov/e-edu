@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useCenters } from '@/lib/hooks/useCenters';
 import { centerService } from '@/lib/services/centerService';
 import Card from '@/components/ui/Card';
@@ -28,13 +28,7 @@ export default function SuperAdminDashboard() {
   const [centersWithStats, setCentersWithStats] = useState<CenterWithStats[]>([]);
   const [statsLoading, setStatsLoading] = useState(true);
 
-  useEffect(() => {
-    if (centers.length > 0) {
-      loadAllStats();
-    }
-  }, [centers]);
-
-  const loadAllStats = async () => {
+  const loadAllStats = useCallback(async () => {
     try {
       const data = await Promise.all(
         centers.map(async (center) => {
@@ -55,7 +49,13 @@ export default function SuperAdminDashboard() {
     } finally {
       setStatsLoading(false);
     }
-  };
+  }, [centers]);
+
+  useEffect(() => {
+    if (centers.length > 0) {
+      loadAllStats();
+    }
+  }, [centers.length, loadAllStats]);
 
   if (loading || statsLoading) {
     return (

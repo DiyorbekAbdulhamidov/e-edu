@@ -26,12 +26,11 @@ export default function AttendancePage() {
     user?.centerId || ''
   );
 
-  const selectedGroup = groups.find((g) => g.id === selectedGroupId);
   const groupStudents = students.filter((s) =>
     s.groups.includes(selectedGroupId)
   );
 
-  if (groupsLoading) {
+  if (groupsLoading || studentsLoading) {
     return (
       <div className="flex justify-center items-center h-64">
         <Spinner size="lg" />
@@ -91,7 +90,7 @@ export default function AttendancePage() {
       ) : groupStudents.length === 0 ? (
         <Card>
           <p className="text-center text-gray-500 py-12">
-            Bu guruhda talabalar yo'q
+            Bu guruhda talabalar yo&apos;q
           </p>
         </Card>
       ) : attendanceLoading ? (

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { reportService } from '@/lib/services/reportService';
 import Card from '@/components/ui/Card';
@@ -9,29 +9,32 @@ import Spinner from '@/components/ui/Spinner';
 
 export default function AttendanceReportPage() {
   const { user } = useAuthContext();
-  const [report, setReport] = useState<any[]>([]);
+  type AttendanceReportRow = Awaited<
+    ReturnType<typeof reportService.getAttendanceReport>
+  >[number];
+  const [report, setReport] = useState<AttendanceReportRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (user?.centerId && user.centerId !== 'pending') {
-      loadReport();
-    }
-  }, [user]);
-
-  const loadReport = async () => {
+  const loadReport = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       const data = await reportService.getAttendanceReport(user!.centerId!);
       setReport(data);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Load report error:', error);
-      setError(error.message);
+      setError(error instanceof Error ? error.message : 'Xatolik yuz berdi');
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user?.centerId && user.centerId !== 'pending') {
+      loadReport();
+    }
+  }, [loadReport, user]);
 
   const handleExport = () => {
     if (report.length === 0) {
@@ -62,7 +65,7 @@ export default function AttendanceReportPage() {
             Davomat hisoboti
           </h1>
           <p className="text-gray-600 mt-1">
-            Guruhlar bo'yicha davomat statistikasi
+            Guruhlar bo&apos;yicha davomat statistikasi
           </p>
         </div>
 
@@ -90,14 +93,14 @@ export default function AttendanceReportPage() {
           <div className="text-3xl font-bold mb-2">
             {averageAttendance.toFixed(1)}%
           </div>
-          <div className="text-success-100">O'rtacha davomat</div>
+          <div className="text-success-100">O&apos;rtacha davomat</div>
         </Card>
       </div>
 
       <Card>
         {report.length === 0 ? (
           <p className="text-center text-gray-500 py-12">
-            Ma'lumot topilmadi
+            Ma&apos;lumot topilmadi
           </p>
         ) : (
           <div className="overflow-x-auto">
