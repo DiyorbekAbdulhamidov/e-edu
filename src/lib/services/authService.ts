@@ -19,6 +19,25 @@ import { auth, db } from '@/lib/firebase/config';
 import { CreateUserData, LoginCredentials, AuthUser } from '@/lib/types';
 
 class AuthService {
+  private resolveErrorMessage(error: unknown, fallback: string): string {
+    if (error && typeof error === 'object' && 'code' in error) {
+      const code = (error as { code?: string }).code;
+      if (typeof code === 'string') {
+        return this.getErrorMessage(code);
+      }
+    }
+
+    if (error instanceof Error) {
+      return error.message || fallback;
+    }
+
+    if (typeof error === 'string') {
+      return error || fallback;
+    }
+
+    return fallback;
+  }
+
   /* ================= REGISTER (Self Registration) ================= */
   async register(data: CreateUserData): Promise<AuthUser> {
     try {
@@ -53,13 +72,12 @@ class AuthService {
         role: data.role,
         centerId: data.centerId,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Registration error:', error);
-
-      const message = error.code
-        ? this.getErrorMessage(error.code)
-        : error.message || 'Ro\'yxatdan o\'tishda xatolik';
-
+      const message = this.resolveErrorMessage(
+        error,
+        'Ro\'yxatdan o\'tishda xatolik'
+      );
       throw new Error(message);
     }
   }
@@ -82,9 +100,11 @@ class AuthService {
       }
 
       return result.userId;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Create user error:', error);
-      throw new Error(error.message || 'Foydalanuvchi yaratishda xatolik');
+      throw new Error(
+        this.resolveErrorMessage(error, 'Foydalanuvchi yaratishda xatolik')
+      );
     }
   }
 
@@ -120,13 +140,9 @@ class AuthService {
         role: userData.role,
         centerId: userData.centerId,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Login error:', error);
-
-      const message = error.code
-        ? this.getErrorMessage(error.code)
-        : error.message || 'Kirishda xatolik';
-
+      const message = this.resolveErrorMessage(error, 'Kirishda xatolik');
       throw new Error(message);
     }
   }
@@ -144,13 +160,12 @@ class AuthService {
   async resetPassword(email: string): Promise<void> {
     try {
       await sendPasswordResetEmail(auth, email);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Reset password error:', error);
-
-      const message = error.code
-        ? this.getErrorMessage(error.code)
-        : 'Parolni tiklashda xatolik';
-
+      const message = this.resolveErrorMessage(
+        error,
+        'Parolni tiklashda xatolik'
+      );
       throw new Error(message);
     }
   }
@@ -174,13 +189,12 @@ class AuthService {
 
       await reauthenticateWithCredential(user, credential);
       await updatePassword(user, newPassword);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Change password error:', error);
-
-      const message = error.code
-        ? this.getErrorMessage(error.code)
-        : error.message || 'Parolni o\'zgartirishda xatolik';
-
+      const message = this.resolveErrorMessage(
+        error,
+        'Parolni o\'zgartirishda xatolik'
+      );
       throw new Error(message);
     }
   }

@@ -131,9 +131,9 @@ export default function TeacherModal({
       }
 
       onSuccess();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Submit teacher error:', err);
-      setError(err.message || 'Xatolik yuz berdi');
+      setError(err instanceof Error ? err.message : 'Xatolik yuz berdi');
     } finally {
       setLoading(false);
     }

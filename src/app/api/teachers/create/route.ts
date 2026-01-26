@@ -44,10 +44,12 @@ export async function POST(request: NextRequest) {
       success: true,
       teacherId: userId,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Create teacher API error:', error);
+    const message =
+      error instanceof Error ? error.message : 'Teacher yaratishda xatolik';
     return NextResponse.json(
-      { error: error.message || 'Teacher yaratishda xatolik' },
+      { error: message },
       { status: 500 }
     );
   }

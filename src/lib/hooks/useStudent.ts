@@ -21,8 +21,8 @@ export function useStudent(studentId: string, centerId: string) {
         const data = await studentService.getById(studentId, centerId);
         setStudent(data);
         setError(null);
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Xatolik yuz berdi');
         setStudent(null);
       } finally {
         setLoading(false);

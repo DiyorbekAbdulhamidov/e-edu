@@ -27,7 +27,7 @@ export function useStudents(centerId: string, filters?: FilterParams) {
     );
 
     return () => unsubscribe();
-  }, [centerId, filters?.status, filters?.search]);
+  }, [centerId, filters]);
 
   return { students, loading, error };
 }

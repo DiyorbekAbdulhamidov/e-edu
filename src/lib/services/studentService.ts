@@ -26,30 +26,69 @@ import {
   FilterParams,
 } from '@/lib/types';
 
+export const buildStudentCreatePayload = (
+  data: CreateStudentData,
+  centerId: string,
+  userId: string
+) => {
+  const assignedGroupId =
+    data.assignedGroupId ?? data.groups?.[0] ?? null;
+  const groups = data.groups ?? (assignedGroupId ? [assignedGroupId] : []);
+
+  return {
+    centerId,
+    firstName: data.firstName,
+    lastName: data.lastName,
+    phone: data.phone,
+    parentPhone: data.parentPhone,
+    dateOfBirth: Timestamp.fromDate(data.dateOfBirth),
+    address: data.address,
+    status: 'active' as const,
+    enrollmentDate: Timestamp.fromDate(data.enrollmentDate),
+    groups,
+    assignedGroupId,
+    assignedGroupName: data.assignedGroupName ?? null,
+    totalDebt: 0,
+    photo: data.photo || '',
+    notes: data.notes || '',
+    parentId: data.parentId || null,
+    createdBy: userId,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  };
+};
+
+export const buildStudentUpdatePayload = (data: UpdateStudentData) => {
+  const updateData: Record<string, unknown> = {
+    ...data,
+    updatedAt: serverTimestamp(),
+  };
+
+  if (data.dateOfBirth) {
+    updateData.dateOfBirth = Timestamp.fromDate(data.dateOfBirth);
+  }
+
+  if (data.enrollmentDate) {
+    updateData.enrollmentDate = Timestamp.fromDate(data.enrollmentDate);
+  }
+
+  if (typeof data.assignedGroupId !== 'undefined' && !data.groups) {
+    updateData.groups = data.assignedGroupId ? [data.assignedGroupId] : [];
+  }
+
+  if (typeof data.assignedGroupName !== 'undefined') {
+    updateData.assignedGroupName = data.assignedGroupName ?? null;
+  }
+
+  return updateData;
+};
+
 class StudentService {
   private collectionName = 'students';
 
   async create(data: CreateStudentData, centerId: string, userId: string): Promise<string> {
     try {
-      const studentData = {
-        centerId,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        phone: data.phone,
-        parentPhone: data.parentPhone,
-        dateOfBirth: Timestamp.fromDate(data.dateOfBirth),
-        address: data.address,
-        status: 'active' as const,
-        enrollmentDate: Timestamp.fromDate(data.enrollmentDate),
-        groups: [],
-        totalDebt: 0,
-        photo: data.photo || '',
-        notes: data.notes || '',
-        parentId: data.parentId || null,
-        createdBy: userId,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      };
+      const studentData = buildStudentCreatePayload(data, centerId, userId);
 
       const docRef = await addDoc(collection(db, this.collectionName), studentData);
       return docRef.id;
@@ -76,14 +115,7 @@ class StudentService {
         throw new Error('Ruxsat yo\'q');
       }
 
-      const updateData: any = {
-        ...data,
-        updatedAt: serverTimestamp(),
-      };
-
-      if (data.dateOfBirth) {
-        updateData.dateOfBirth = Timestamp.fromDate(data.dateOfBirth);
-      }
+      const updateData = buildStudentUpdatePayload(data);
 
       await updateDoc(studentRef, updateData);
     } catch (error) {
@@ -276,7 +308,12 @@ class StudentService {
     }
   }
 
-  async addToGroup(studentId: string, groupId: string, centerId: string): Promise<void> {
+  async addToGroup(
+    studentId: string,
+    groupId: string,
+    centerId: string,
+    groupName?: string
+  ): Promise<void> {
     try {
       const studentRef = doc(db, this.collectionName, studentId);
       const studentDoc = await getDoc(studentRef);
@@ -297,6 +334,8 @@ class StudentService {
 
       await updateDoc(studentRef, {
         groups: [...student.groups, groupId],
+        assignedGroupId: groupId,
+        assignedGroupName: groupName ?? null,
         updatedAt: serverTimestamp(),
       });
     } catch (error) {
@@ -324,8 +363,11 @@ class StudentService {
         throw new Error('Ruxsat yo\'q');
       }
 
+      const remainingGroups = student.groups.filter((gId) => gId !== groupId);
       await updateDoc(studentRef, {
-        groups: student.groups.filter((gId) => gId !== groupId),
+        groups: remainingGroups,
+        assignedGroupId: remainingGroups[0] ?? null,
+        assignedGroupName: null,
         updatedAt: serverTimestamp(),
       });
     } catch (error) {

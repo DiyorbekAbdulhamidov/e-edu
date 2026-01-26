@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test": "node --test --loader ./tools/ts-loader.mjs"
   },
   "dependencies": {
     "date-fns": "^4.1.0",
