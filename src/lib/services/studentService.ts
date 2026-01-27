@@ -33,33 +33,25 @@ export const buildStudentCreatePayload = (
   data: CreateStudentData,
   centerId: string,
   userId: string
-) => {
-  const assignedGroupId =
-    data.assignedGroupId ?? data.groups?.[0] ?? null;
-  const groups = data.groups ?? (assignedGroupId ? [assignedGroupId] : []);
-
-  return {
-    centerId,
-    firstName: data.firstName,
-    lastName: data.lastName,
-    phone: data.phone,
-    parentPhone: data.parentPhone,
-    dateOfBirth: Timestamp.fromDate(data.dateOfBirth),
-    address: data.address,
-    status: 'active' as const,
-    enrollmentDate: Timestamp.fromDate(data.enrollmentDate),
-    groups,
-    assignedGroupId,
-    assignedGroupName: data.assignedGroupName ?? null,
-    totalDebt: 0,
-    photo: data.photo || '',
-    notes: data.notes || '',
-    parentId: data.parentId || null,
-    createdBy: userId,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  };
-};
+) => ({
+  centerId,
+  firstName: data.firstName,
+  lastName: data.lastName,
+  phone: data.phone,
+  parentPhone: data.parentPhone,
+  dateOfBirth: Timestamp.fromDate(data.dateOfBirth),
+  address: data.address,
+  status: 'active' as const,
+  enrollmentDate: Timestamp.fromDate(data.enrollmentDate),
+  groups: [],
+  totalDebt: 0,
+  photo: data.photo || '',
+  notes: data.notes || '',
+  parentId: data.parentId || null,
+  createdBy: userId,
+  createdAt: serverTimestamp(),
+  updatedAt: serverTimestamp(),
+});
 
 export const buildStudentUpdatePayload = (data: UpdateStudentData) => {
   const updateData: Record<string, unknown> = {
@@ -73,14 +65,6 @@ export const buildStudentUpdatePayload = (data: UpdateStudentData) => {
 
   if (data.enrollmentDate) {
     updateData.enrollmentDate = Timestamp.fromDate(data.enrollmentDate);
-  }
-
-  if (typeof data.assignedGroupId !== 'undefined' && !data.groups) {
-    updateData.groups = data.assignedGroupId ? [data.assignedGroupId] : [];
-  }
-
-  if (typeof data.assignedGroupName !== 'undefined') {
-    updateData.assignedGroupName = data.assignedGroupName ?? null;
   }
 
   return updateData;

@@ -33,7 +33,7 @@ export function useStudents(centerId: string, filters?: FilterParams) {
     );
 
     return () => unsubscribe();
-  }, [centerId, filtersKey]);
+  }, [centerId, filters]);
 
   return { students, loading, error };
 }

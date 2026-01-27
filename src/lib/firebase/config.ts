@@ -13,16 +13,7 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-const requiredConfig = {
-  apiKey: firebaseConfig.apiKey,
-  authDomain: firebaseConfig.authDomain,
-  projectId: firebaseConfig.projectId,
-  storageBucket: firebaseConfig.storageBucket,
-  messagingSenderId: firebaseConfig.messagingSenderId,
-  appId: firebaseConfig.appId,
-};
-
-const isConfigured = Object.values(requiredConfig).every(Boolean);
+const isConfigured = Object.values(firebaseConfig).every(Boolean);
 
 // Firebase'ni faqat bir marta initialize qilish
 let app: FirebaseApp | null = null;
