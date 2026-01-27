@@ -17,6 +17,7 @@ export function useStudents(centerId: string, filters?: FilterParams) {
 
   useEffect(() => {
     if (!centerId) {
+      setStudents([]);
       setLoading(false);
       return;
     }
@@ -33,7 +34,7 @@ export function useStudents(centerId: string, filters?: FilterParams) {
     );
 
     return () => unsubscribe();
-  }, [centerId, filters]);
+  }, [centerId, filtersKey]);
 
   return { students, loading, error };
 }

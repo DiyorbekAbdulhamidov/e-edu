@@ -45,6 +45,9 @@ export interface UpdateStudentData {
   address?: string;
   enrollmentDate?: Date;
   status?: StudentStatus;
+  assignedGroupId?: string | null;
+  assignedGroupName?: string | null;
+  groups?: string[];
   photo?: string;
   notes?: string;
 }
