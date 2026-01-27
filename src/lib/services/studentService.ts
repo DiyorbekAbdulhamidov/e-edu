@@ -1,3 +1,4 @@
+import { FirebaseError } from 'firebase/app';
 import {
   collection,
   doc,
@@ -14,6 +15,8 @@ import {
   Timestamp,
   serverTimestamp,
   onSnapshot,
+  QuerySnapshot,
+  DocumentData,
   QueryConstraint,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
@@ -218,41 +221,69 @@ class StudentService {
 
     if (filters?.status) {
       constraints.push(where('status', '==', filters.status));
-      constraints.push(orderBy('createdAt', 'desc'));
-    } else {
-      constraints.push(orderBy('createdAt', 'desc'));
     }
 
     constraints.push(limit(filters?.limit || 100));
 
-    const q = query(collection(db, this.collectionName), ...constraints);
+    const orderedQuery = query(
+      collection(db, this.collectionName),
+      ...constraints,
+      orderBy('createdAt', 'desc')
+    );
+    const fallbackQuery = query(collection(db, this.collectionName), ...constraints);
+    let fallbackUnsubscribe: (() => void) | null = null;
+
+    const handleSnapshot = (snapshot: QuerySnapshot<DocumentData>) => {
+      let students: Student[] = [];
+      snapshot.forEach((doc) => {
+        students.push({ id: doc.id, ...doc.data() } as Student);
+      });
+
+      if (filters?.search) {
+        const searchLower = filters.search.toLowerCase();
+        students = students.filter(
+          (student) =>
+            student.firstName.toLowerCase().includes(searchLower) ||
+            student.lastName.toLowerCase().includes(searchLower) ||
+            student.phone.includes(searchLower)
+        );
+      }
+
+      callback(students);
+    };
 
     const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        let students: Student[] = [];
-        snapshot.forEach((doc) => {
-          students.push({ id: doc.id, ...doc.data() } as Student);
-        });
-
-        if (filters?.search) {
-          const searchLower = filters.search.toLowerCase();
-          students = students.filter(
-            (student) =>
-              student.firstName.toLowerCase().includes(searchLower) ||
-              student.lastName.toLowerCase().includes(searchLower) ||
-              student.phone.includes(searchLower)
-          );
-        }
-
-        callback(students);
-      },
+      orderedQuery,
+      handleSnapshot,
       (error) => {
+        if (
+          error instanceof FirebaseError &&
+          error.code === 'failed-precondition' &&
+          !fallbackUnsubscribe
+        ) {
+          console.warn(
+            'Student subscription requires index, retrying without ordering.',
+            error
+          );
+          fallbackUnsubscribe = onSnapshot(
+            fallbackQuery,
+            handleSnapshot,
+            (fallbackError) => {
+              console.error('Student subscription error:', fallbackError);
+            }
+          );
+          return;
+        }
         console.error('Student subscription error:', error);
       }
     );
 
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+      if (fallbackUnsubscribe) {
+        fallbackUnsubscribe();
+      }
+    };
   }
 
   async getStats(centerId: string): Promise<StudentStats> {
