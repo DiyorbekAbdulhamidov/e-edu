@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { groupService } from '@/lib/services/groupService';
 import { Group, FilterParams } from '@/lib/types';
 
@@ -8,6 +8,12 @@ export function useGroups(centerId: string, filters?: FilterParams) {
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const filtersKey = useMemo(() => JSON.stringify(filters ?? {}), [filters]);
+  const filtersRef = useRef<FilterParams | undefined>(filters);
+
+  useEffect(() => {
+    filtersRef.current = filters;
+  }, [filtersKey, filters]);
 
   useEffect(() => {
     if (!centerId || centerId === 'pending') {
@@ -27,14 +33,14 @@ export function useGroups(centerId: string, filters?: FilterParams) {
           setError(null);
         }
       },
-      filters
+      filtersRef.current
     );
 
     return () => {
       isSubscribed = false;
       unsubscribe();
     };
-  }, [centerId, filters]);
+  }, [centerId, filtersKey]);
 
   return { groups, loading, error };
 }

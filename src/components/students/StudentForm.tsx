@@ -121,6 +121,7 @@ export default function StudentForm({ student, onSuccess }: StudentFormProps) {
           notes: formData.notes,
           assignedGroupId: selectedGroupId,
           assignedGroupName: selectedGroup?.name,
+          groups: [selectedGroupId],
         };
 
         await studentService.create(createData, user.centerId, user.uid);
@@ -218,6 +219,11 @@ export default function StudentForm({ student, onSuccess }: StudentFormProps) {
             required
           >
             <option value="">Guruh tanlang</option>
+            {groups.length === 0 && (
+              <option value="" disabled>
+                Guruhlar topilmadi
+              </option>
+            )}
             {groups
               .filter((group) => group.status === 'active')
               .map((group) => (

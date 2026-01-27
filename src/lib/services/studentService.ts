@@ -33,25 +33,33 @@ export const buildStudentCreatePayload = (
   data: CreateStudentData,
   centerId: string,
   userId: string
-) => ({
-  centerId,
-  firstName: data.firstName,
-  lastName: data.lastName,
-  phone: data.phone,
-  parentPhone: data.parentPhone,
-  dateOfBirth: Timestamp.fromDate(data.dateOfBirth),
-  address: data.address,
-  status: 'active' as const,
-  enrollmentDate: Timestamp.fromDate(data.enrollmentDate),
-  groups: [],
-  totalDebt: 0,
-  photo: data.photo || '',
-  notes: data.notes || '',
-  parentId: data.parentId || null,
-  createdBy: userId,
-  createdAt: serverTimestamp(),
-  updatedAt: serverTimestamp(),
-});
+) => {
+  const assignedGroupId = data.assignedGroupId ?? data.groups?.[0] ?? null;
+  const assignedGroupName = data.assignedGroupName ?? null;
+  const groups = data.groups ?? (assignedGroupId ? [assignedGroupId] : []);
+
+  return {
+    centerId,
+    firstName: data.firstName,
+    lastName: data.lastName,
+    phone: data.phone,
+    parentPhone: data.parentPhone,
+    dateOfBirth: Timestamp.fromDate(data.dateOfBirth),
+    address: data.address,
+    status: 'active' as const,
+    enrollmentDate: Timestamp.fromDate(data.enrollmentDate),
+    groups,
+    assignedGroupId,
+    assignedGroupName,
+    totalDebt: 0,
+    photo: data.photo || '',
+    notes: data.notes || '',
+    parentId: data.parentId || null,
+    createdBy: userId,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  };
+};
 
 export const buildStudentUpdatePayload = (data: UpdateStudentData) => {
   const updateData: Record<string, unknown> = {

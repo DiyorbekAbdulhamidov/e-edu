@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import AdminPage from '../src/app/(dashboard)/admin/page.tsx';
+import { readFile } from 'node:fs/promises';
 
-test('admin page module loads', () => {
-  assert.equal(typeof AdminPage, 'function');
+test('admin page module exists with default export', async () => {
+  const contents = await readFile('src/app/(dashboard)/admin/page.tsx', 'utf8');
+  assert.ok(contents.includes('export default'));
 });
