@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { groupService } from '@/lib/services/groupService';
 import { useStudents } from '@/lib/hooks/useStudents';
@@ -26,13 +26,7 @@ export default function TeacherAttendancePage() {
     user?.centerId || ''
   );
 
-  useEffect(() => {
-    if (user?.uid && user?.centerId) {
-      loadGroups();
-    }
-  }, [user]);
-
-  const loadGroups = async () => {
+  const loadGroups = useCallback(async () => {
     try {
       const data = await groupService.getByTeacherId(
         user!.uid,
@@ -44,7 +38,13 @@ export default function TeacherAttendancePage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user?.uid && user?.centerId) {
+      loadGroups();
+    }
+  }, [loadGroups, user]);
 
   const groupStudents = students.filter((s) =>
     s.groups.includes(selectedGroupId)

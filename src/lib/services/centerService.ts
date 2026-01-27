@@ -10,7 +10,6 @@ import {
   where,
   orderBy,
   serverTimestamp,
-  Timestamp,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import {
@@ -168,7 +167,7 @@ class CenterService {
   /**
    * Centerni bloklash/aktivlashtirish
    */
-  async updateStatus(centerId: string, status: 'active' | 'suspended'): Promise<void> {
+  async updateStatus(centerId: string, status: 'active' | 'inactive'): Promise<void> {
     try {
       const centerRef = doc(db, this.collectionName, centerId);
       await updateDoc(centerRef, {

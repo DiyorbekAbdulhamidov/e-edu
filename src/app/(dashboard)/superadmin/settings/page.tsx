@@ -43,8 +43,10 @@ export default function SuperAdminSettingsPage() {
         newPassword: '',
         confirmPassword: '',
       });
-    } catch (error: any) {
-      alert('Xatolik: ' + error.message);
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Xatolik yuz berdi';
+      alert('Xatolik: ' + message);
     } finally {
       setSaving(false);
     }

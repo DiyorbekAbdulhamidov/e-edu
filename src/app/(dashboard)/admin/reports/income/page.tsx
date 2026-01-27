@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { reportService } from '@/lib/services/reportService';
 import Card from '@/components/ui/Card';
@@ -10,16 +10,13 @@ import Spinner from '@/components/ui/Spinner';
 export default function IncomeReportPage() {
   const { user } = useAuthContext();
   const [year, setYear] = useState(new Date().getFullYear());
-  const [report, setReport] = useState<any[]>([]);
+  type IncomeReportRow = Awaited<
+    ReturnType<typeof reportService.getIncomeReport>
+  >[number];
+  const [report, setReport] = useState<IncomeReportRow[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (user?.centerId) {
-      loadReport();
-    }
-  }, [user, year]);
-
-  const loadReport = async () => {
+  const loadReport = useCallback(async () => {
     try {
       setLoading(true);
       const data = await reportService.getIncomeReport(user!.centerId!, year);
@@ -29,7 +26,13 @@ export default function IncomeReportPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, year]);
+
+  useEffect(() => {
+    if (user?.centerId) {
+      loadReport();
+    }
+  }, [loadReport, user]);
 
   const handleExport = () => {
     reportService.exportToCSV(report, `income_report_${year}`);
@@ -77,12 +80,12 @@ export default function IncomeReportPage() {
           <div className="text-3xl font-bold mb-2">
             {totalIncome.toLocaleString()}
           </div>
-          <div className="text-success-100">Jami daromad (so'm)</div>
+          <div className="text-success-100">Jami daromad (so&apos;m)</div>
         </Card>
 
         <Card className="bg-gradient-to-br from-primary-500 to-primary-600 text-white">
           <div className="text-3xl font-bold mb-2">{totalPayments}</div>
-          <div className="text-primary-100">Jami to'lovlar</div>
+          <div className="text-primary-100">Jami to&apos;lovlar</div>
         </Card>
 
         <Card className="bg-gradient-to-br from-warning-500 to-warning-600 text-white">
@@ -91,7 +94,7 @@ export default function IncomeReportPage() {
               ? Math.round(totalIncome / totalPayments).toLocaleString()
               : 0}
           </div>
-          <div className="text-warning-100">O'rtacha to'lov</div>
+          <div className="text-warning-100">O&apos;rtacha to&apos;lov</div>
         </Card>
       </div>
 
@@ -102,9 +105,9 @@ export default function IncomeReportPage() {
             <thead className="table-header">
               <tr>
                 <th className="table-header-cell">Oy</th>
-                <th className="table-header-cell">To'lovlar soni</th>
+                <th className="table-header-cell">To&apos;lovlar soni</th>
                 <th className="table-header-cell">Jami daromad</th>
-                <th className="table-header-cell">O'rtacha</th>
+                <th className="table-header-cell">O&apos;rtacha</th>
               </tr>
             </thead>
             <tbody>
@@ -113,7 +116,7 @@ export default function IncomeReportPage() {
                   <td className="table-cell font-medium">{row.month}</td>
                   <td className="table-cell">{row.paymentsCount}</td>
                   <td className="table-cell font-semibold text-success-600">
-                    {row.totalIncome.toLocaleString()} so'm
+                    {row.totalIncome.toLocaleString()} so&apos;m
                   </td>
                   <td className="table-cell">
                     {row.paymentsCount > 0
@@ -121,7 +124,7 @@ export default function IncomeReportPage() {
                         row.totalIncome / row.paymentsCount
                       ).toLocaleString()
                       : 0}{' '}
-                    so'm
+                    so&apos;m
                   </td>
                 </tr>
               ))}

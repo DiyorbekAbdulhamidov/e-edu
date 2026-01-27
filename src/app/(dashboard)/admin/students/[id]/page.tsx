@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState, useEffect } from 'react';
+import { use, useState } from 'react';
 import Link from 'next/link';
 import { useStudent } from '@/lib/hooks/useStudent';
 import { useGroups } from '@/lib/hooks/useGroups';
@@ -32,21 +32,36 @@ export default function StudentDetailPage({
   const availableGroups = groups.filter(g =>
     !student?.groups.includes(g.id) && g.status === 'active'
   );
+  const assignedGroupName =
+    student?.assignedGroupName ||
+    groups.find((group) => group.id === student?.assignedGroupId)?.name ||
+    groups.find((group) => group.id === student?.groups[0])?.name ||
+    null;
 
   const handleAddToGroup = async () => {
     if (!selectedGroupId || !student || !user?.centerId) return;
 
     setActionLoading(true);
     try {
-      await studentService.addToGroup(student.id, selectedGroupId, user.centerId);
+      const selectedGroup = availableGroups.find(
+        (group) => group.id === selectedGroupId
+      );
+      await studentService.addToGroup(
+        student.id,
+        selectedGroupId,
+        user.centerId,
+        selectedGroup?.name
+      );
       await groupService.incrementStudentCount(selectedGroupId, user.centerId);
 
       alert('Talaba guruhga qo\'shildi!');
       setShowAddGroup(false);
       setSelectedGroupId('');
       window.location.reload(); // Refresh
-    } catch (error: any) {
-      alert('Xatolik: ' + error.message);
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Xatolik yuz berdi';
+      alert('Xatolik: ' + message);
     } finally {
       setActionLoading(false);
     }
@@ -63,8 +78,10 @@ export default function StudentDetailPage({
 
       alert('Talaba guruhdan olib tashlandi!');
       window.location.reload();
-    } catch (error: any) {
-      alert('Xatolik: ' + error.message);
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Xatolik yuz berdi';
+      alert('Xatolik: ' + message);
     } finally {
       setActionLoading(false);
     }
@@ -144,6 +161,13 @@ export default function StudentDetailPage({
             <div>
               <p className="text-sm text-gray-600">Manzil</p>
               <p className="font-medium">{student.address}</p>
+            </div>
+
+            <div>
+              <p className="text-sm text-gray-600">Guruh</p>
+              <p className="font-medium">
+                {assignedGroupName || 'Guruh tanlanmagan'}
+              </p>
             </div>
 
             <div>

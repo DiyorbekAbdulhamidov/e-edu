@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { studentService } from '@/lib/services/studentService';
 import { Student, FilterParams } from '@/lib/types';
 
@@ -8,6 +8,12 @@ export function useStudents(centerId: string, filters?: FilterParams) {
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const filtersKey = useMemo(() => JSON.stringify(filters ?? {}), [filters]);
+  const filtersRef = useRef<FilterParams | undefined>(filters);
+
+  useEffect(() => {
+    filtersRef.current = filters;
+  }, [filtersKey, filters]);
 
   useEffect(() => {
     if (!centerId) {
@@ -23,11 +29,11 @@ export function useStudents(centerId: string, filters?: FilterParams) {
         setLoading(false);
         setError(null);
       },
-      filters
+      filtersRef.current
     );
 
     return () => unsubscribe();
-  }, [centerId, filters?.status, filters?.search]);
+  }, [centerId, filtersKey]);
 
   return { students, loading, error };
 }

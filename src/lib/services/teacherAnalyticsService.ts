@@ -9,7 +9,7 @@ import { db } from '@/lib/firebase/config';
 import { teacherService } from './teacherService';
 import { groupService } from './groupService';
 import { teacherSalaryService } from './teacherSalaryService';
-import { TeacherAnalytics } from '@/lib/types';
+import { Group, TeacherAnalytics } from '@/lib/types';
 
 class TeacherAnalyticsService {
   /**
@@ -39,7 +39,6 @@ class TeacherAnalyticsService {
 
       // Attendance statistics
       const attendanceStats = await this.calculateAttendanceStats(
-        teacherId,
         centerId,
         teacherGroups
       );
@@ -82,9 +81,8 @@ class TeacherAnalyticsService {
    * Davomat statistikasi
    */
   private async calculateAttendanceStats(
-    teacherId: string,
     centerId: string,
-    groups: any[]
+    groups: Group[]
   ): Promise<{
     totalClasses: number;
     averageRate: number;
@@ -93,7 +91,7 @@ class TeacherAnalyticsService {
     try {
       let totalClasses = 0;
       let totalPresent = 0;
-      let bestGroup: any = null;
+      let bestGroup: { groupId: string; groupName: string; rate: number } | null = null;
       let bestRate = 0;
 
       for (const group of groups) {

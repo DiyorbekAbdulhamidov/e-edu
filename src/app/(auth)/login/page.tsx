@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { authService } from '@/lib/services/authService';
@@ -9,7 +9,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
 
-export default function LoginPage() {
+function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuthContext();
@@ -55,8 +55,9 @@ export default function LoginPage() {
 
     try {
       await authService.login(formData);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Xatolik yuz berdi');
+    } finally {
       setLoading(false);
     }
   };
@@ -108,12 +109,26 @@ export default function LoginPage() {
         </Button>
 
         <div className="text-center text-sm text-gray-600">
-          Hisobingiz yo'qmi?{' '}
+          Hisobingiz yo&apos;qmi?{' '}
           <Link href="/register" className="text-primary-600 hover:text-primary-700 font-medium">
-            Ro'yxatdan o'tish
+            Ro&apos;yxatdan o&apos;tish
           </Link>
         </div>
       </form>
     </Card>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex justify-center items-center h-64">
+          <div className="text-gray-500">Yuklanmoqda...</div>
+        </div>
+      }
+    >
+      <LoginPageContent />
+    </Suspense>
   );
 }

@@ -131,9 +131,10 @@ export default function RegisterPage() {
         }, 1000);
       }
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Register error:', err);
-      setError(err.message);
+      setError(err instanceof Error ? err.message : 'Xatolik yuz berdi');
+    } finally {
       setLoading(false);
     }
   };
@@ -142,10 +143,10 @@ export default function RegisterPage() {
     <Card className="p-8 max-w-2xl mx-auto">
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Ro'yxatdan o'tish
+          Ro&apos;yxatdan o&apos;tish
         </h1>
         <p className="text-gray-600">
-          O'quv markazi CRM tizimiga xush kelibsiz
+          O&apos;quv markazi CRM tizimiga xush kelibsiz
         </p>
       </div>
 
@@ -179,7 +180,7 @@ export default function RegisterPage() {
             {/* Yangi markaz */}
             <div className="space-y-4 p-4 bg-primary-50 rounded-lg">
               <h3 className="font-semibold text-primary-900">
-                📍 Markaz ma'lumotlari
+                📍 Markaz ma&apos;lumotlari
               </h3>
               <Input
                 label="Markaz nomi"
@@ -230,9 +231,9 @@ export default function RegisterPage() {
 
         {/* Admin ma'lumotlari */}
         <div className="space-y-4">
-          <h3 className="font-semibold text-gray-900">👤 Sizning ma'lumotlaringiz</h3>
+          <h3 className="font-semibold text-gray-900">👤 Sizning ma&apos;lumotlaringiz</h3>
           <Input
-            label="To'liq ismingiz"
+            label="To&apos;liq ismingiz"
             name="displayName"
             value={formData.displayName}
             onChange={handleChange}

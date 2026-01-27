@@ -29,6 +29,7 @@ export interface UpdateTeacherData {
   salaryAmount?: number;
   qualification?: string;
   bio?: string;
+  groups?: string[];
   status?: Status;
 }
 

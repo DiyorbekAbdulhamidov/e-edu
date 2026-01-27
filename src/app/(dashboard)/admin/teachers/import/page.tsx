@@ -22,6 +22,10 @@ export default function BulkImportTeachersPage() {
     }
   };
 
+  type ParsedTeacher = Omit<BulkTeacherImport, 'salaryAmount'> & {
+    salaryAmount: string | number;
+  };
+
   const handleImport = async () => {
     if (!file) {
       alert('Faylni tanlang!');
@@ -33,10 +37,10 @@ export default function BulkImportTeachersPage() {
 
     try {
       // CSV ni parse qilish
-      Papa.parse<BulkTeacherImport>(file, {
+      Papa.parse<ParsedTeacher>(file, {
         header: true,
         skipEmptyLines: true,
-        complete: async (results: { data: any; }) => {
+        complete: async (results: Papa.ParseResult<ParsedTeacher>) => {
           const teachers = results.data;
 
           if (teachers.length === 0) {
@@ -48,7 +52,7 @@ export default function BulkImportTeachersPage() {
           // Validation
           const errors: BulkImportResult['errors'] = [];
 
-          teachers.forEach((teacher: { displayName: any; email: any; password: string | any[]; }, index: number) => {
+          teachers.forEach((teacher, index) => {
             if (!teacher.displayName || !teacher.email || !teacher.password) {
               errors.push({
                 row: index + 2,
@@ -126,11 +130,11 @@ export default function BulkImportTeachersPage() {
               }
 
               successCount++;
-            } catch (error: any) {
+            } catch (error: unknown) {
               importErrors.push({
                 row: i + 2,
                 email: teacher.email,
-                error: error.message,
+                error: error instanceof Error ? error.message : 'Xatolik yuz berdi',
               });
             }
           }
@@ -144,13 +148,15 @@ export default function BulkImportTeachersPage() {
 
           setImporting(false);
         },
-        error: (error: { message: string; }) => {
+        error: (error: Error) => {
           alert('CSV parse xatosi: ' + error.message);
           setImporting(false);
         },
       });
-    } catch (error: any) {
-      alert('Xatolik: ' + error.message);
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Xatolik yuz berdi';
+      alert('Xatolik: ' + message);
       setImporting(false);
     }
   };

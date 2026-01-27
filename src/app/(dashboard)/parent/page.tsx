@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { studentService } from '@/lib/services/studentService';
 import { attendanceService } from '@/lib/services/attendanceService';
@@ -14,13 +14,7 @@ export default function ParentDashboard() {
   const [stats, setStats] = useState<Record<string, AttendanceStats>>({});
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (user?.uid && user?.centerId) {
-      loadChildren();
-    }
-  }, [user]);
-
-  const loadChildren = async () => {
+  const loadChildren = useCallback(async () => {
     try {
       // Ota-onaga tegishli talabalarni topish
       const allStudents = await studentService.list(user!.centerId!, {});
@@ -44,7 +38,13 @@ export default function ParentDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user?.uid && user?.centerId) {
+      loadChildren();
+    }
+  }, [loadChildren, user]);
 
   if (loading) {
     return (

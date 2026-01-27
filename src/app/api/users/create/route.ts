@@ -79,10 +79,11 @@ export async function POST(request: NextRequest) {
       userId
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Create user API error:', error);
+    const message = error instanceof Error ? error.message : 'Server xatosi';
     return NextResponse.json(
-      { error: error.message || 'Server xatosi' },
+      { error: message },
       { status: 500 }
     );
   }

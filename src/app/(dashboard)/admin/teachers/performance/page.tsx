@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { teacherAnalyticsService } from '@/lib/services/teacherAnalyticsService';
 import { TeacherAnalytics } from '@/lib/types';
@@ -14,13 +14,7 @@ export default function TeacherPerformancePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (user?.centerId && user.centerId !== 'pending') {
-      loadAnalytics();
-    }
-  }, [user]);
-
-  const loadAnalytics = async () => {
+  const loadAnalytics = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -28,13 +22,23 @@ export default function TeacherPerformancePage() {
         user!.centerId!
       );
       setAnalytics(data);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Load analytics error:', error);
-      setError(error.message || 'Ma\'lumotlarni yuklashda xatolik');
+      setError(
+        error instanceof Error
+          ? error.message
+          : 'Ma\'lumotlarni yuklashda xatolik'
+      );
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user?.centerId && user.centerId !== 'pending') {
+      loadAnalytics();
+    }
+  }, [loadAnalytics, user]);
 
   const getPerformanceColor = (score: number) => {
     if (score >= 80) return 'text-green-600 bg-green-50';

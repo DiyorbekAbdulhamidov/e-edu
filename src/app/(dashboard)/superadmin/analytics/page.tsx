@@ -1,23 +1,21 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useCenters } from '@/lib/hooks/useCenters';
 import { centerService } from '@/lib/services/centerService';
+import { Center } from '@/lib/types';
 import Card from '@/components/ui/Card';
 import Spinner from '@/components/ui/Spinner';
 
 export default function AnalyticsPage() {
   const { centers, loading: centersLoading } = useCenters();
-  const [stats, setStats] = useState<any[]>([]);
+  type CenterWithStats = Center & {
+    stats: Awaited<ReturnType<typeof centerService.getStats>>;
+  };
+  const [stats, setStats] = useState<CenterWithStats[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (centers.length > 0) {
-      loadAllStats();
-    }
-  }, [centers]);
-
-  const loadAllStats = async () => {
+  const loadAllStats = useCallback(async () => {
     try {
       const data = await Promise.all(
         centers.map(async (center) => {
@@ -34,7 +32,13 @@ export default function AnalyticsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [centers]);
+
+  useEffect(() => {
+    if (centers.length > 0) {
+      loadAllStats();
+    }
+  }, [centers.length, loadAllStats]);
 
   if (centersLoading || loading) {
     return (
